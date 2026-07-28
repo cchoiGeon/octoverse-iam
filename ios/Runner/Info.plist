@@ -66,5 +66,27 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- 카카오 로그인 리다이렉트 수신.
+	     KAKAO_NATIVE_KEY 는 Xcode 빌드 설정(User-Defined)에서 정의한다.
+	     Android 는 환경변수나 android/kakao.properties 에서 읽지만
+	     (build.gradle.kts), iOS 는 xcconfig/빌드설정이 그 자리다 —
+	     어느 쪽이든 키는 저장소에 넣지 않는다. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakao$(KAKAO_NATIVE_KEY)</string>
+			</array>
+		</dict>
+	</array>
+	<!-- 카카오톡 앱 실행 가능 여부 조회. 없으면 항상 계정(웹뷰) 로그인으로 빠진다. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>kakaokompassauth</string>
+		<string>kakaolink</string>
+	</array>
 </dict>
 </plist>

@@ -28,6 +28,8 @@ build/
 android/.gradle/
 android/local.properties
 android/key.properties
+# 카카오 네이티브 앱 키 (build.gradle.kts가 읽는다). 환경변수 KAKAO_NATIVE_KEY로도 된다.
+android/kakao.properties
 android/app/*.jks
 android/app/google-services.json
 **/android/**/gradle-wrapper.jar

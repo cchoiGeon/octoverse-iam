@@ -25,6 +25,22 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- 카카오 로그인 리다이렉트 수신.
+             스킴의 키는 gradle이 환경변수 KAKAO_NATIVE_KEY 또는
+             android/kakao.properties 에서 채운다 (build.gradle.kts 참고).
+             키가 없으면 "kakao"만 남아 동작하지 않는데, 그 경우 Dart 쪽도
+             개발용 로그인으로 폴백하므로 이 액티비티를 탈 일이 없다. -->
+        <activity
+            android:name="com.kakao.sdk.flutter.AuthCodeCustomTabsActivity"
+            android:exported="true">
+            <intent-filter android:label="flutter_web_auth">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="kakao${kakaoNativeKey}" android:host="oauth" />
+            </intent-filter>
+        </activity>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -41,5 +57,8 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Android 11+ 패키지 가시성. 없으면 `isKakaoTalkInstalled()`가 항상
+             false를 돌려줘 카카오톡이 깔려 있어도 계정(웹뷰) 로그인으로 빠진다. -->
+        <package android:name="com.kakao.talk" />
     </queries>
 </manifest>
