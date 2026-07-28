@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show showDialog;
+import 'package:flutter/material.dart' show Material, MaterialType, showDialog;
 import 'package:flutter/widgets.dart';
 
 import 'package:iam/common/constants/colors.dart';
@@ -67,76 +67,90 @@ class IamDialog extends StatelessWidget {
     return Semantics(
       scopesRoute: true,
       namesRoute: true,
+      // ⚠️ `scopesRoute: true`면 `explicitChildNodes: true`가 **강제**다
+      //    (rendering/object.dart의 assert). 빼면 다이얼로그를 띄우는 순간
+      //    빌드가 터진다 — 로그아웃·모임 삭제 등 확인 다이얼로그 전부.
+      //    스코프 노드가 자식 시맨틱스를 흡수하면 스크린리더가 본문·버튼을
+      //    개별로 못 읽기 때문에 프레임워크가 막아 둔 것이다.
+      explicitChildNodes: true,
       label: title,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppDimens.space6),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 340),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimens.space5,
-                AppDimens.space6,
-                AppDimens.space5,
-                AppDimens.space4,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceCard,
-                borderRadius: BorderRadius.circular(AppDimens.radius2xl),
-                boxShadow: AppShadows.elev4,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (title != null) ...[
-                    Text(
-                      title!,
-                      textAlign: TextAlign.center,
-                      style: AppTypography.title2.copyWith(height: 1.35),
-                    ),
-                    const SizedBox(height: AppDimens.space2),
-                  ],
-                  if (description != null) ...[
-                    Text(
-                      description!,
-                      textAlign: TextAlign.center,
-                      style: AppTypography.body.copyWith(
-                        height: 1.6,
-                        color: AppColors.textSecondary,
+            // ⚠️ `showDialog`는 `Material`을 깔아주지 않는다
+            //    (`showModalBottomSheet`는 깔아준다 — 그래서 시트는 멀쩡했다).
+            //    Material 없이 두면 `WidgetsApp`의 "빠졌다" 표시용 기본
+            //    TextStyle이 상속돼 **모든 글자에 노란 이중 밑줄**이 그려진다.
+            //    배경·그림자는 아래 Container가 그리므로 타입은 transparency.
+            child: Material(
+              type: MaterialType.transparency,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimens.space5,
+                  AppDimens.space6,
+                  AppDimens.space5,
+                  AppDimens.space4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceCard,
+                  borderRadius: BorderRadius.circular(AppDimens.radius2xl),
+                  boxShadow: AppShadows.elev4,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (title != null) ...[
+                      Text(
+                        title!,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.title2.copyWith(height: 1.35),
                       ),
-                    ),
-                    const SizedBox(height: AppDimens.space5),
-                  ],
-                  if (body != null) ...[
-                    body!,
-                    const SizedBox(height: AppDimens.space2),
-                  ],
-                  Row(
-                    children: [
-                      if (showCancel) ...[
+                      const SizedBox(height: AppDimens.space2),
+                    ],
+                    if (description != null) ...[
+                      Text(
+                        description!,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.body.copyWith(
+                          height: 1.6,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space5),
+                    ],
+                    if (body != null) ...[
+                      body!,
+                      const SizedBox(height: AppDimens.space2),
+                    ],
+                    Row(
+                      children: [
+                        if (showCancel) ...[
+                          Expanded(
+                            child: _Action(
+                              label: cancelText,
+                              background: AppColors.surfaceSunken,
+                              foreground: AppColors.textSecondary,
+                              onTap: () => Navigator.of(context).pop(false),
+                            ),
+                          ),
+                          const SizedBox(width: AppDimens.space2),
+                        ],
                         Expanded(
                           child: _Action(
-                            label: cancelText,
-                            background: AppColors.surfaceSunken,
-                            foreground: AppColors.textSecondary,
-                            onTap: () => Navigator.of(context).pop(false),
+                            label: confirmText,
+                            background: tone == IamDialogTone.danger
+                                ? AppColors.error600
+                                : AppColors.primary,
+                            foreground: AppColors.gray0,
+                            onTap: () => Navigator.of(context).pop(true),
                           ),
                         ),
-                        const SizedBox(width: AppDimens.space2),
                       ],
-                      Expanded(
-                        child: _Action(
-                          label: confirmText,
-                          background: tone == IamDialogTone.danger
-                              ? AppColors.error600
-                              : AppColors.primary,
-                          foreground: AppColors.gray0,
-                          onTap: () => Navigator.of(context).pop(true),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
