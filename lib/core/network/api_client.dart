@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
-import 'package:iam/common/constants/defines.dart';
 import 'package:iam/data/data_manager.dart';
 
 import 'apis.dart';
@@ -18,7 +17,16 @@ part 'api_client.g.dart';
 ///
 /// ⚠️ 이 파일을 고치면 반드시 코드 생성을 다시 돌린다:
 ///   flutter pub run build_runner build --delete-conflicting-outputs
-@RestApi(baseUrl: kApiBase)
+///
+/// ⚠️ **`@RestApi`에 baseUrl을 주지 않는다.** 서버 주소는 Dio의
+///    `BaseOptions.baseUrl`(dio_configuration.dart)이 런타임에 정한다.
+///
+///    애노테이션에 `baseUrl: kApiBase`를 주면 생성기가 **코드 생성 시점의
+///    값을 문자열 리터럴로 박아버린다**(`baseUrl ??= 'https://dev-api...'`).
+///    게다가 생성 코드의 `_combineBaseUrls`는 그 값이 절대 URL이면 Dio 설정을
+///    덮어쓴다. 결과적으로 `--dart-define=API_BASE=...`가 조용히 무시돼
+///    어떤 환경으로 빌드하든 항상 dev 서버로 붙는다.
+@RestApi()
 abstract class ApiClient {
   factory ApiClient(Dio dio, {String baseUrl}) = _ApiClient;
 

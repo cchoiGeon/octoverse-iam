@@ -4,4 +4,16 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- 로컬 서버(http://10.0.2.2:3000)를 붙일 때 필요하다.
+         targetSdk 28+ 는 평문 HTTP 를 기본 차단해서, 없으면 Dio 가
+         "Cleartext HTTP traffic to 10.0.2.2 not permitted" 로 실패한다.
+
+         ⚠️ **debug 소스셋에만 둔다.** main 에 넣으면 릴리스 빌드까지
+            평문 통신이 열린다. 매니페스트 병합기가 이 속성을 debug 빌드의
+            <application> 에만 얹는다.
+
+         에뮬레이터에서 호스트 맥은 127.0.0.1 이 아니라 10.0.2.2 다
+         (127.0.0.1 은 에뮬레이터 자기 자신). -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

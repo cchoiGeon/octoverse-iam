@@ -77,6 +77,21 @@ flutter run --dart-define=API_BASE=https://dev-api.octoverse.kr/iam/v1
 (`POST /auth/test/login`, 계정 `doyoon@iam.app`)으로 폴백하고 화면에 그 사실이 표시된다.
 카카오 콘솔 설정 전에 서버 연동만 먼저 확인할 때 이 경로를 쓴다.
 
+### 로컬 서버(iam-server)에 붙이기
+
+```bash
+# iam-server: npm run start:dev  (포트 3000, 프리픽스 /iam/v1)
+flutter run --dart-define=API_BASE=http://10.0.2.2:3000/iam/v1
+```
+
+⚠️ **에뮬레이터에서 호스트 PC는 `127.0.0.1`이 아니라 `10.0.2.2`다.**
+`127.0.0.1`은 에뮬레이터 자기 자신을 가리킨다. (iOS 시뮬레이터는 호스트와
+네트워크를 공유하므로 그냥 `localhost`를 쓰면 된다.)
+
+평문 HTTP는 Android가 기본 차단하는데, `android/app/src/debug/AndroidManifest.xml`에
+`usesCleartextTraffic="true"`를 넣어 뒀다. **debug 빌드에만** 적용되므로
+릴리스는 그대로 막혀 있다.
+
 ---
 
 ## 디렉터리
