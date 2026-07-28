@@ -1,0 +1,81 @@
+name: iam
+description: "IAM — 만나기 전에, 이미 통하는 사이. 오프라인 모임 사전 네트워킹 앱."
+
+publish_to: 'none'
+
+version: 0.1.0+1
+
+environment:
+  # 3.8 하한 이유 두 가지:
+  #  · Dart 3.8 — null-aware elements(`?instance.x`). json_serializable 6.11+ 가
+  #    생성하는 문법이라 이보다 낮으면 코드 생성물이 컴파일되지 않는다.
+  #  · Dart 3.6(Flutter 3.27) — `Color.withValues()`(AppShadows).
+  sdk: ">=3.8.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── 상태관리 · DI · 라우팅 (Pickle과 동일 스택) ──────────────
+  get: ^4.6.6
+  get_storage: ^2.1.1
+
+  # ── 네트워크 ────────────────────────────────────────────────
+  dio: ^5.7.0
+  retrofit: ^4.4.1
+  json_annotation: ^4.9.0
+  pretty_dio_logger: ^1.4.0
+
+  # ── 인증 ────────────────────────────────────────────────────
+  # 웹은 authorize 리다이렉트(서버가 콜백 소유)지만, 앱은 네이티브 SDK로
+  # id_token을 받아 POST /auth/oauth/kakao 로 보낸다(REST §1.1 동일 계약).
+  kakao_flutter_sdk_user: ^1.9.7
+
+  # ── UI · 미디어 ─────────────────────────────────────────────
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.10
+  image_picker: ^1.1.2
+  intl: ^0.19.0
+
+  # ── 기능별 ──────────────────────────────────────────────────
+  qr_flutter: ^4.1.0        # 참가 QR 생성 (ShareEventSheet)
+  mobile_scanner: ^5.2.3    # QR 스캐너 (/scan) — 웹의 BarcodeDetector+jsqr 대응
+  wakelock_plus: ^1.2.8     # 주최자 체크인 화면 꺼짐 방지 (웹 Screen Wake Lock 대응)
+  # 홍보포스터 PNG 캡처 — 웹 html-to-image 대응.
+  # screenshot 패키지는 쓰지 않는다. 결국 `RepaintBoundary.toImage()` 한 줄을
+  # 감싼 것뿐이고, 우리는 미리보기 위젯 자체를 캡처하므로 래퍼가 필요 없다.
+  path_provider: ^2.1.5     # 캡처 PNG를 임시 파일로 떨굴 위치
+  share_plus: ^10.1.2
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.13
+  # ⚠️ retrofit 과 세대를 맞춰야 한다. generator 9.x + retrofit 4.9.x 조합은
+  #    `Parser.DartMappable` 미인식으로 빌드 스크립트 컴파일이 깨진다.
+  retrofit_generator: ^10.2.8
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # Pretendard Variable — IAM_web과 동일 폰트.
+  # ⚠️ Figma 시안은 Noto Sans KR을 스탠드인으로 쓰므로 시안의 행간(leading)을
+  #    그대로 옮기면 어긋난다. 행간은 AppTypography 값을 따른다.
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Pretendard-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
