@@ -237,6 +237,21 @@ abstract class ApiClient {
   Future<Page<NotificationRow>> notifications({@Query('size') int? size});
 
   // ══════════════════════════════════════════════════════════
+  // Device (FCM 푸시 토큰)
+  // ══════════════════════════════════════════════════════════
+
+  /// 이 기기의 FCM 토큰을 등록한다. 멱등이라 로그인·토큰갱신마다 그냥 쏜다.
+  ///
+  /// ⚠️ 비로그인 상태에서 부르면 안 된다. 401 이 인터셉터를 타면 세션이
+  ///    끊긴 것으로 처리돼 사용자가 로그인 화면으로 튕긴다.
+  @POST(Apis.devices)
+  Future<void> registerDevice(@Body() DeviceRegisterRequest body);
+
+  /// 로그아웃 시 해제. 안 하면 로그아웃한 기기로 계속 푸시가 간다.
+  @DELETE(Apis.device)
+  Future<void> unregisterDevice(@Path('token') String token);
+
+  // ══════════════════════════════════════════════════════════
   // Business Card & Exchange
   // ══════════════════════════════════════════════════════════
 

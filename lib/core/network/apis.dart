@@ -54,6 +54,13 @@ abstract final class Apis {
   // ── §8 Notification ────────────────────────────────────────
   static const String notifications = '/notifications';
 
+  // ── Device (FCM 푸시 토큰) ─────────────────────────────────
+  /// 이 기기의 FCM 토큰 등록. 멱등 — 같은 토큰 재전송은 갱신만 한다.
+  static const String devices = '/users/me/devices';
+
+  /// 로그아웃 시 해제. 계약은 `docs/server-requirements-fcm.md` §1.
+  static const String device = '/users/me/devices/{token}';
+
   // ── Business Card & Exchange ───────────────────────────────
   /// GET·PUT(upsert)·DELETE — owner당 1개인 단일 리소스.
   static const String myBusinessCard = '/users/me/business-card';

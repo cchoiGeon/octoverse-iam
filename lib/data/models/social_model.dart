@@ -256,3 +256,22 @@ class ExchangeCard {
       _$ExchangeCardFromJson(json);
   Map<String, dynamic> toJson() => _$ExchangeCardToJson(this);
 }
+
+// ══════════════════════════════════════════════════════════════
+// Device (FCM 푸시 토큰)
+// ══════════════════════════════════════════════════════════════
+
+@JsonSerializable(fieldRename: FieldRename.snake, includeIfNull: false)
+class DeviceRegisterRequest {
+  const DeviceRegisterRequest({required this.token, this.platform = 'android'});
+
+  /// FCM registration token. 기기·앱 설치 단위로 발급되고 재발급될 수 있다.
+  final String token;
+
+  /// 지금은 Android 만 지원한다. iOS 를 붙일 때 'ios' 가 추가된다.
+  final String platform;
+
+  factory DeviceRegisterRequest.fromJson(Map<String, dynamic> json) =>
+      _$DeviceRegisterRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$DeviceRegisterRequestToJson(this);
+}
