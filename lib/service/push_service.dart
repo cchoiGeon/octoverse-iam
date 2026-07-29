@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 
 import 'package:iam/core/network/api_client.dart';
 import 'package:iam/data/data_manager.dart';
+import 'package:iam/service/notification_service.dart';
+import 'package:iam/service/push_router.dart';
 
 /// FCM 토큰 수명주기 소유자.
 ///
@@ -14,15 +18,26 @@ import 'package:iam/data/data_manager.dart';
 /// 재로그인한 유저에게 권한 팝업을 다시 띄우면 안 되지만, 토큰 자체는 매번
 /// 등록돼야 한다. FCM 토큰은 앱 재설치·데이터 삭제·장기 미사용으로 바뀐다.
 class PushService extends GetxService {
-  PushService(this._api);
+  /// AndroidManifest 의 `default_notification_channel_id` 와 같은 값이어야 한다.
+  /// 다르면 백그라운드(OS 가 그림)와 포그라운드(우리가 그림) 알림이 서로 다른
+  /// 채널로 가서 사용자가 소리·중요도를 따로 꺼야 하는 상태가 된다.
+  static const _channelId = 'iam_default';
+
+  PushService(this._api, this._notifications);
 
   final ApiClient _api;
+  final NotificationService _notifications;
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
 
   StreamSubscription<String>? _refreshSub;
+  StreamSubscription<RemoteMessage>? _messageSub;
 
   /// 서버에 등록해둔 토큰. 로그아웃 시 이 값으로 DELETE 한다.
   String? _registered;
+
+  /// 로컬 알림 id. 겹치면 이전 알림을 덮어써서 하나만 남는다.
+  int _localId = 0;
 
   @override
   void onInit() {
@@ -30,11 +45,14 @@ class PushService extends GetxService {
     // 토큰은 예고 없이 재발급된다. 갱신되면 서버 것도 바꿔줘야
     // 이전 토큰으로 가던 푸시가 끊기지 않는다.
     _refreshSub = _fcm.onTokenRefresh.listen(_register);
+    _messageSub = FirebaseMessaging.onMessage.listen(_showForeground);
+    unawaited(_initLocalNotifications());
   }
 
   @override
   void onClose() {
     _refreshSub?.cancel();
+    _messageSub?.cancel();
     super.onClose();
   }
 
@@ -98,5 +116,72 @@ class PushService extends GetxService {
       // 푸시는 보조 기능 — 실패해도 화면을 막지 않는다.
       // 다음 앱 실행의 syncToken() 이 재시도한다.
     }
+  }
+
+  // ── 포그라운드 표시 ─────────────────────────────────────────
+
+  Future<void> _initLocalNotifications() async {
+    await _local.initialize(
+      settings: const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload == null) return;
+        _openRoute(jsonDecode(payload) as Map<String, dynamic>);
+      },
+    );
+
+    // 채널은 앱 설치 후 한 번만 만들어지고, 이후 중요도 변경은 무시된다.
+    // (사용자가 직접 바꾼 설정을 앱이 덮어쓰지 못하게 하는 Android 정책)
+    await _local
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _channelId,
+            '알림',
+            description: '모임 리마인더 · 명함 교환 등 IAM 알림',
+            importance: Importance.high,
+          ),
+        );
+  }
+
+  /// 앱이 떠 있는 동안 도착한 푸시.
+  ///
+  /// Android 는 이 경우 시스템 배너를 자동으로 띄우지 않는다. 직접 그리고,
+  /// 벨 배지가 같이 오르도록 알림 목록도 다시 불러온다.
+  void _showForeground(RemoteMessage message) {
+    unawaited(_notifications.load());
+
+    final notification = message.notification;
+    if (notification == null) return;
+
+    _local.show(
+      id: _localId++,
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          '알림',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      // 탭했을 때 어디로 갈지는 data 에 들어 있다. payload 는 String 만
+      // 받으므로 JSON 으로 실어 보낸다.
+      payload: jsonEncode(message.data),
+    );
+  }
+
+  // ── 탭 → 화면 이동 ──────────────────────────────────────────
+
+  void _openRoute(Map<String, dynamic> data) {
+    // 비로그인 상태의 딥링크는 버린다 — RouteGuard 가 막고, 로그인 후
+    // 원래 목적지로 복원하는 기능은 아직 없다.
+    if (!Storage.hasSession) return;
+    Get.toNamed(routeForPush(data));
   }
 }

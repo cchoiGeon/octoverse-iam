@@ -55,8 +55,8 @@ void _registerGlobals() {
 
   final auth = Get.put(AuthService(api), permanent: true);
   Get.put(ReferenceService(api), permanent: true);
-  Get.put(NotificationService(api, auth), permanent: true);
-  final push = Get.put(PushService(api), permanent: true);
+  final notifications = Get.put(NotificationService(api, auth), permanent: true);
+  final push = Get.put(PushService(api, notifications), permanent: true);
   // 로그아웃 시 이 기기로 푸시가 계속 가지 않게 토큰을 뗀다.
   auth.onBeforeSignOut = push.unregister;
   Get.put(ToastService(), permanent: true);
