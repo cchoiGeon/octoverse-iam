@@ -199,8 +199,13 @@ class PushService extends GetxService {
   /// `offAllNamed` 가 아니라 `toNamed` 로 쌓는 이유는, 뒤로가기로 홈에
   /// 돌아올 수 있어야 하기 때문이다(`_openRoute` 참고).
   Future<void> handleInitialMessage() async {
-    final message = await _fcm.getInitialMessage();
-    if (message == null) return;
-    _openRoute(message.data);
+    try {
+      final message = await _fcm.getInitialMessage();
+      if (message == null) return;
+      _openRoute(message.data);
+    } catch (_) {
+      // 딥링크 실패는 삼킨다 — 이 시점에 유저는 이미 홈에 도착해 있어서
+      // 화면이 비지 않는다. Play 서비스 부재 등으로 죽을 이유가 없다.
+    }
   }
 }
