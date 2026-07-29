@@ -1120,9 +1120,16 @@ Android 는 앱이 떠 있는 동안 배너를 자동으로 안 띄운다.
   /// `offAllNamed` 가 아니라 `toNamed` 로 쌓는 이유는, 뒤로가기로 홈에
   /// 돌아올 수 있어야 하기 때문이다(`_openRoute` 참고).
   Future<void> handleInitialMessage() async {
-    final message = await _fcm.getInitialMessage();
-    if (message == null) return;
-    _openRoute(message.data);
+    try {
+      final message = await _fcm.getInitialMessage();
+      if (message == null) return;
+      _openRoute(message.data);
+    } catch (_) {
+      // Global Constraints — 푸시 실패는 전부 삼킨다. 여기서 던지면 _boot() 이
+      // unawaited 라 처리되지 않은 Future 에러가 된다. 이미 홈에 도착한 뒤라
+      // 사용자에게는 영향이 없고, 나중에 크래시 리포터를 붙였을 때 "Play 서비스
+      // 없음" 같은 예상된 실패가 크래시로 잡히는 것만 남는다.
+    }
   }
 ```
 
