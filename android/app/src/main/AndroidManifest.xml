@@ -1,4 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 앱 본체가 쓰는 권한이므로 main 에 명시한다.
+         Flutter 템플릿은 이 권한을 debug·profile 소스셋에만 넣어주는데,
+         그건 개발 중 Flutter 툴이 앱과 통신하기 위한 것이지 앱 자신을 위한
+         게 아니다.
+
+         릴리스 빌드에서도 지금까지는 권한이 있었다 — 다만 우리가 선언해서가
+         아니라 mobile_scanner → ML Kit → transport-backend-cct 가 자기
+         매니페스트에 INTERNET 을 달고 있어서 병합된 것이다. QR 스캐너를
+         빼거나 그 의존성이 바뀌면 소리 없이 사라진다. 우리 API 호출이 남의
+         라이브러리 매니페스트에 기대고 있을 이유가 없다. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="iam"
         android:name="${applicationName}"
