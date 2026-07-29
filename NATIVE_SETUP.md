@@ -139,6 +139,14 @@ platform :ios, '13.0'
 
 ---
 
+## 4-1. Firebase 콘솔 (푸시)
+
+FCM 푸시를 쓰려면 별도 설정이 필요하다 → [`docs/firebase-setup-android.md`](docs/firebase-setup-android.md)
+
+푸시 없이 앱을 돌리는 데는 지장이 없으니 나중에 해도 된다.
+
+---
+
 ## 5. 실행
 
 ```bash
