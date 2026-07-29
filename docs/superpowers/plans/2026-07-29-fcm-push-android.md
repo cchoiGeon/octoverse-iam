@@ -49,6 +49,7 @@
 | `test/push_router_test.dart` (신규) | 라우팅 매핑 전수 검증 |
 | `lib/data/enums/social_enums.dart` | `NotificationTypeParse.tryParse()` 추가 |
 | `lib/data/models/social_model.dart` | `DeviceRegisterRequest` 추가 |
+| `test/device_model_test.dart` (신규, Task 3) | `DeviceRegisterRequest`가 snake_case로 직렬화되는지, `platform` 기본값 검증 |
 | `lib/core/network/apis.dart` | `devices` · `device` 경로 상수 |
 | `lib/core/network/api_client.dart` | `registerDevice` · `unregisterDevice` |
 | `lib/service/services.dart` | `push_service.dart` export |

@@ -81,11 +81,24 @@ FCM 관련 부수효과를 전부 소유하는 유일한 지점. 다른 코드�
 |---|---|---|
 | `syncToken()` | 권한이 **이미 granted**면 `getToken()` → `POST /users/me/devices`. 아니면 no-op | `SplashController`(로그인 상태일 때), `LoginController` 로그인 성공 후 |
 | `requestPermissionAndRegister()` | OS 권한 팝업 → 승인 시 `syncToken()`과 동일 등록. 거부 시 조용히 넘어감 | `OnboardingController` 제출 성공 후, `Get.offAllNamed(home)` 직전 |
-| `unregister()` | `DELETE /users/me/devices/{token}` → `FirebaseMessaging.deleteToken()` | `AuthService.signOutLocal()` |
+| `unregister()` | `DELETE /users/me/devices/{token}` → `FirebaseMessaging.deleteToken()` | `AuthService.signOutLocal()`(콜백 경유), `AuthInterceptorHooks.onSessionExpired`(`main.dart`) |
 
 **`syncToken()`과 `requestPermissionAndRegister()`를 나눈 이유**: 재로그인 유저에게
 권한 팝업을 다시 띄우면 안 되지만, 토큰 자체는 매번 갱신·등록돼야 한다. FCM 토큰은
 앱 재설치·앱 데이터 삭제·장기 미사용으로 바뀐다.
+
+**`unregister()`는 호출 지점이 두 곳이고, 성격이 다르다.**
+- `AuthService.signOutLocal()` — 직접 부르지 않는다. `AuthService`가 `PushService`를
+  알면 서로 참조하게 되므로, `main.dart`가 `auth.onBeforeSignOut = push.unregister`로
+  콜백을 꽂아 간접 호출한다. 이 경로는 `Storage.clearSession()` **전에** 훅이 도는
+  것이 계약이라, DELETE 요청에 Bearer가 실린다(§ 위 `unregister()` 코멘트 참고) —
+  정합성이 **호출 순서**에 달려 있다.
+- `AuthInterceptorHooks.onSessionExpired`(`main.dart`) — 401로 세션이 끊긴 경로다.
+  이때는 `Storage`가 **이미 비어 있어서** `signOutLocal()`(과 그 훅)을 타지 않는다.
+  `unregister()` 내부에서 `token != null && Storage.hasSession`이 이미 false이므로
+  서버 DELETE는 건너뛰고 `deleteToken()`만 실행된다 — 정합성이 호출 순서가 아니라
+  `hasSession` 가드 자체에 달려 있다. 세션이 끊긴 채로도 FCM 쪽 토큰은 반드시
+  무효화해야 로그아웃한(정확히는 튕겨난) 기기가 계속 푸시를 받지 않는다.
 
 서비스 초기화(`onInit`)에서 배선하는 것:
 - `FirebaseMessaging.onTokenRefresh` 구독 → 서버 재등록
@@ -134,11 +147,11 @@ String routeForPush(Map<String, dynamic> data);
 | `lib/core/network/api_client.dart` | `registerDevice(@Body DeviceRegisterRequest)`, `unregisterDevice(@Path token)` → build_runner 재실행 |
 | `lib/data/models/social_model.dart` | `DeviceRegisterRequest { token, platform }` (`FieldRename.snake`) |
 | `lib/data/enums/social_enums.dart` | `NotificationTypeParse.tryParse(String?)` — 모르는 값은 null (§3.2) |
-| `lib/main.dart` | `Firebase.initializeApp()`, `Get.put(PushService(...))` |
+| `lib/main.dart` | `Firebase.initializeApp()`, `Get.put(PushService(...))`, `auth.onBeforeSignOut = push.unregister` 배선, `AuthInterceptorHooks.onSessionExpired`에서 `unawaited(push.unregister())` 추가 호출 |
 | `lib/feature/splash/splash_controller.dart` | 라우팅 완료 **후** `getInitialMessage()` 처리 (§3.4) |
 | `lib/feature/onboarding/onboarding_controller.dart` | `Get.offAllNamed(home)` 직전에 `requestPermissionAndRegister()` |
 | `lib/feature/login/login_controller.dart` | 로그인 성공 후 `syncToken()` (await 하지 않음 — 로그인 흐름을 막지 않는다) |
-| `lib/service/auth_service.dart` | `signOutLocal()`에서 `unregister()` (best-effort, 실패해도 로컬 세션은 지운다) |
+| `lib/service/auth_service.dart` | `onBeforeSignOut` 콜백 필드 추가. `signOutLocal()`이 `Storage.clearSession()` **전에** 이 콜백을 태운다(best-effort, 실패해도 로컬 세션은 지운다). `main.dart`가 여기에 `push.unregister`를 꽂는다 — 직접 호출이 아니라 콜백 경유다(§ 위 `unregister()` 설명 참고) |
 | `lib/service/services.dart` | `export 'push_service.dart';` |
 
 ### 3.4 ⚠️ 콜드 스타트 딥링크 타이밍
@@ -223,8 +236,12 @@ String routeForPush(Map<String, dynamic> data);
 ## 6. 검증
 
 ### 자동
-- `test/service/push_router_test.dart` — `routeForPush()` 매핑. 9개 타입 전부 +
-  `channel_slug` 누락 + 알 수 없는 type + 빈 map
+- `test/push_router_test.dart` — `routeForPush()` 매핑. 9개 타입 전부 +
+  `channel_slug` 누락 + 알 수 없는 type + 빈 map + `type`/`channel_slug`가
+  String이 아닌 값으로 온 경우 (테스트 파일은 프로젝트 관례대로 `test/`
+  바로 아래 평평하게 둔다 — `test/service/` 처럼 하위 디렉터리를 만들지 않는다)
+- `test/device_model_test.dart` — `DeviceRegisterRequest`가 서버 계약대로
+  snake_case로 직렬화되는지, `platform` 기본값이 `android`인지
 
 ### 수동 (Firebase 콘솔 → Cloud Messaging → 테스트 메시지, 토큰 직접 입력)
 
