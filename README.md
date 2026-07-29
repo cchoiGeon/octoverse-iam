@@ -13,7 +13,7 @@ Pixel 3a / API 34 에뮬레이터, Flutter 3.44.8, dev 서버(`dev-api.octoverse
 
 ```
 dart analyze   →  No issues found!
-flutter test   →  All tests passed! (23개)
+flutter test   →  All tests passed! (41개)
 ```
 
 | 영역 | 상태 |
