@@ -14,7 +14,11 @@ class SplashBinding extends Bindings {
   @override
   void dependencies() {
     Get.put<SplashController>(
-      SplashController(Get.find<AuthService>(), Get.find<ReferenceService>()),
+      SplashController(
+        Get.find<AuthService>(),
+        Get.find<ReferenceService>(),
+        Get.find<PushService>(),
+      ),
     );
   }
 }
