@@ -10,10 +10,17 @@ import 'package:iam/data/enums/enums.dart';
 /// 값이 빠지거나 모르는 타입이 와도 **절대 던지지 않는다** — 푸시를 탭했는데
 /// 앱이 죽는 것보다 알림함이 열리는 게 낫다.
 String routeForPush(Map<String, dynamic> data) {
-  final type = NotificationTypeParse.tryParse(data['type'] as String?);
+  // `as String?` 는 값이 있는데 String 이 아니면(e.g. `{'type': 123}`) 던진다.
+  // FCM 프로토콜상 data 값은 전부 문자열이라 오늘은 안 일어나지만, 이
+  // 함수의 계약("절대 던지지 않는다")은 입력 형태를 가리지 않는다.
+  final rawType = data['type'];
+  final type = NotificationTypeParse.tryParse(
+    rawType is String ? rawType : null,
+  );
   if (type == null) return AppRoutes.meNotifications;
 
-  final slug = (data['channel_slug'] as String?)?.trim();
+  final rawSlug = data['channel_slug'];
+  final slug = (rawSlug is String ? rawSlug : null)?.trim();
 
   // enum 위의 exhaustive switch — NotificationType 에 값이 추가되면
   // 여기서 컴파일 에러가 나서 라우트 결정을 강제한다.

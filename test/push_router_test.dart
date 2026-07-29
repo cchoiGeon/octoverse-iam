@@ -63,5 +63,16 @@ void main() {
     test('type 자체가 없으면', () {
       expect(routeForPush({}), AppRoutes.meNotifications);
     });
+
+    test('type 이 String 이 아니면 (캐스팅 실패로 던지지 않는다)', () {
+      expect(routeForPush({'type': 123}), AppRoutes.meNotifications);
+    });
+
+    test('channel_slug 가 String 이 아니면 (캐스팅 실패로 던지지 않는다)', () {
+      expect(
+        routeForPush({'type': 'reminder_24h', 'channel_slug': 123}),
+        AppRoutes.meNotifications,
+      );
+    });
   });
 }

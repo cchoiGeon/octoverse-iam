@@ -76,5 +76,9 @@ flutter {
 
 dependencies {
     // isCoreLibraryDesugaringEnabled 가 요구하는 폴리필 라이브러리.
+    // 버전은 임의로 고른 게 아니다 — flutter_local_notifications 22.2.0 이
+    // 자기 android/build.gradle 과 README 에서 그대로 pin 해 둔 값을 따른다.
+    // 플러그인을 올릴 때는 이 값도 같이 재확인한다
+    // (~/.pub-cache/hosted/pub.dev/flutter_local_notifications-<ver>/android/build.gradle).
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

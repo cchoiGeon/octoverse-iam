@@ -37,8 +37,27 @@ class PushService extends GetxService {
   /// 서버에 등록해둔 토큰. 로그아웃 시 이 값으로 DELETE 한다.
   String? _registered;
 
+  /// `unregister()` 진행 중 표시.
+  ///
+  /// `onBeforeSignOut` 훅이 도는 동안(= `Storage.hasSession`이 아직 true인
+  /// 동안) `onTokenRefresh`가 새 토큰을 쏘면, 그 토큰이 `_register`의
+  /// `hasSession` 가드를 그대로 통과해 방금 로그아웃한 계정의 Bearer로 다시
+  /// 등록돼버린다. `deleteToken()` 자체도 재발급을 유발할 수 있는 호출이라
+  /// 이 창 "안"에 있다. 로그아웃이 끝날 때까지 등록을 막아야 한다.
+  bool _signingOut = false;
+
   /// 로컬 알림 id. 겹치면 이전 알림을 덮어써서 하나만 남는다.
-  int _localId = 0;
+  /// 0부터 시작하면 새 세션의 배너가 지난 실행에서 트레이에 남아 있던
+  /// 알림과 id가 겹쳐 그걸 덮어써버릴 수 있다. 시계값으로 시작해 피한다.
+  int _localId = DateTime.now().millisecondsSinceEpoch;
+
+  /// `_initLocalNotifications()`의 진행 상태.
+  ///
+  /// `onInit`에서 fire-and-forget으로 시작하기 때문에, `initialize()`가
+  /// 끝나기 전에 푸시가 도착하면 `_showForeground`가 아직 준비 안 된
+  /// 플러그인의 `show()`를 부를 수 있다. 이 Future를 들고 있다가
+  /// `_showForeground`에서 먼저 기다린다.
+  Future<void>? _localReady;
 
   @override
   void onInit() {
@@ -50,7 +69,7 @@ class PushService extends GetxService {
     _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(
       (m) => _openRoute(m.data),
     );
-    unawaited(_initLocalNotifications());
+    _localReady = _initLocalNotifications();
   }
 
   @override
@@ -82,22 +101,29 @@ class PushService extends GetxService {
   /// ⚠️ `Storage.clearSession()` **전에** 불려야 DELETE 에 Bearer 가 실린다.
   ///    `AuthService.onBeforeSignOut` 이 그 순서를 보장한다.
   Future<void> unregister() async {
-    final token = _registered;
-    _registered = null;
-
-    if (token != null && Storage.hasSession) {
-      try {
-        await _api.unregisterDevice(token);
-      } catch (_) {
-        // best-effort. 서버에 레코드가 남아도 아래 deleteToken() 이 FCM 쪽에서
-        // 토큰을 무효화하므로, 다음 발송이 UNREGISTERED 를 받아 정리된다.
-      }
-    }
-
+    // finally 로 반드시 풀어준다 — 중간에 던져도 다음 로그인의 등록이
+    // 영영 막히면 안 된다.
+    _signingOut = true;
     try {
-      await _fcm.deleteToken();
-    } catch (_) {
-      // Play 서비스 부재 등. 로그아웃 자체를 막을 이유는 없다.
+      final token = _registered;
+      _registered = null;
+
+      if (token != null && Storage.hasSession) {
+        try {
+          await _api.unregisterDevice(token);
+        } catch (_) {
+          // best-effort. 서버에 레코드가 남아도 아래 deleteToken() 이 FCM 쪽에서
+          // 토큰을 무효화하므로, 다음 발송이 UNREGISTERED 를 받아 정리된다.
+        }
+      }
+
+      try {
+        await _fcm.deleteToken();
+      } catch (_) {
+        // Play 서비스 부재 등. 로그아웃 자체를 막을 이유는 없다.
+      }
+    } finally {
+      _signingOut = false;
     }
   }
 
@@ -111,6 +137,11 @@ class PushService extends GetxService {
   }
 
   Future<void> _register(String token) async {
+    // ⚠️ 로그아웃 진행 중이면 부르지 않는다. unregister() 가 도는 동안은
+    //    Storage.hasSession 이 아직 true 라 아래 가드만으로는 못 막는다 —
+    //    onTokenRefresh 가 이 창에서 새 토큰을 쏘면 방금 로그아웃한
+    //    계정으로 재등록될 수 있다.
+    if (_signingOut) return;
     // ⚠️ 세션이 없으면 부르지 않는다. 401 이 _AuthInterceptor 를 타면
     //    세션 만료로 처리돼 보고 있던 화면에서 로그인으로 튕긴다.
     if (!Storage.hasSession) return;
@@ -157,28 +188,39 @@ class PushService extends GetxService {
   ///
   /// Android 는 이 경우 시스템 배너를 자동으로 띄우지 않는다. 직접 그리고,
   /// 벨 배지가 같이 오르도록 알림 목록도 다시 불러온다.
-  void _showForeground(RemoteMessage message) {
+  Future<void> _showForeground(RemoteMessage message) async {
+    // 배지 갱신은 배너 표시와 무관하게 진행한다 — 아래가 실패하거나
+    // 늦어져도 벨 배지는 제때 올라야 한다.
     unawaited(_notifications.load());
 
     final notification = message.notification;
     if (notification == null) return;
 
-    _local.show(
-      id: _localId++,
-      title: notification.title,
-      body: notification.body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          '알림',
-          importance: Importance.high,
-          priority: Priority.high,
+    try {
+      // onInit 은 초기화를 기다리지 않고 바로 리턴한다. initialize() 가
+      // 끝나기 전에 푸시가 도착하면 플러그인이 아직 준비 안 된 상태라
+      // show() 가 예외를 던진다.
+      await _localReady;
+      await _local.show(
+        id: _localId++,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            '알림',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
         ),
-      ),
-      // 탭했을 때 어디로 갈지는 data 에 들어 있다. payload 는 String 만
-      // 받으므로 JSON 으로 실어 보낸다.
-      payload: jsonEncode(message.data),
-    );
+        // 탭했을 때 어디로 갈지는 data 에 들어 있다. payload 는 String 만
+        // 받으므로 JSON 으로 실어 보낸다.
+        payload: jsonEncode(message.data),
+      );
+    } catch (_) {
+      // 이 파일의 방침대로 삼킨다 — 배너 하나 못 띄운다고 화면을 막지 않는다.
+      // 벨 배지는 위에서 이미 갱신을 시작했으므로 사용자는 알림함에서 확인할 수 있다.
+    }
   }
 
   // ── 탭 → 화면 이동 ──────────────────────────────────────────
@@ -201,8 +243,23 @@ class PushService extends GetxService {
   Future<void> handleInitialMessage() async {
     try {
       final message = await _fcm.getInitialMessage();
-      if (message == null) return;
-      _openRoute(message.data);
+      if (message != null) {
+        _openRoute(message.data);
+        return;
+      }
+
+      // 포그라운드 배너는 FCM 이 아니라 flutter_local_notifications 가
+      // 그린다. 그 배너가 트레이에 남아 있는 채로 앱이 완전히 종료됐다가
+      // 그 배너를 탭해 실행되면, onDidReceiveNotificationResponse 도
+      // 안 불리고(플러그인이 아직 리스너를 못 붙인 시점) getInitialMessage()
+      // 도 null 이다(OS 가 이 알림을 FCM 을 거쳐 그린 게 아니라서 FCM 은
+      // 이 실행을 모른다). 로컬 플러그인 쪽 "이 알림으로 실행됐는가"를
+      // 대신 물어봐야 딥링크를 못 잃는다.
+      final launch = await _local.getNotificationAppLaunchDetails();
+      if (launch == null || !launch.didNotificationLaunchApp) return;
+      final payload = launch.notificationResponse?.payload;
+      if (payload == null) return;
+      _openRoute(jsonDecode(payload) as Map<String, dynamic>);
     } catch (_) {
       // 딥링크 실패는 삼킨다 — 이 시점에 유저는 이미 홈에 도착해 있어서
       // 화면이 비지 않는다. Play 서비스 부재 등으로 죽을 이유가 없다.
