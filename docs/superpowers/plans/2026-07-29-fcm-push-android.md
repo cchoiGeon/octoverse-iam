@@ -547,8 +547,12 @@ Expected: `Succeeded` 후 `No issues found!`
 
 - [ ] **Step 9: 커밋**
 
+⚠️ `.g.dart` 는 스테이징하지 않는다. `.gitignore:17-18` 이 `*.g.dart` ·
+`*.freezed.dart` 를 제외하고 있고, 이 저장소에 추적되는 생성 파일은 하나도 없다.
+받는 사람이 `dart run build_runner build` 를 돌리는 것이 이 프로젝트의 계약이다.
+
 ```bash
-git add lib/core/network/apis.dart lib/core/network/api_client.dart lib/core/network/api_client.g.dart lib/data/models/social_model.dart lib/data/models/social_model.g.dart test/device_model_test.dart
+git add lib/core/network/apis.dart lib/core/network/api_client.dart lib/data/models/social_model.dart test/device_model_test.dart
 git commit -m "feat(push): 디바이스 토큰 등록·해제 API 계약
 
 서버에 아직 없는 엔드포인트다. 앱이 요구하는 계약을 먼저 박아두고
