@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -29,6 +30,11 @@ Future<void> main() async {
   await initializeDateFormatting('ko_KR');
 
   await Storage.init();
+
+  // FCM 은 Firebase 앱이 초기화된 뒤에만 쓸 수 있다.
+  // android/app/google-services.json 에서 설정을 읽으므로 인자가 없다
+  // (Android 전용이라 firebase_options.dart 를 만들지 않는다).
+  await Firebase.initializeApp();
 
   if (kKakaoNativeKey.isNotEmpty) {
     KakaoSdk.init(nativeAppKey: kKakaoNativeKey);

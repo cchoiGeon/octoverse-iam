@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "716889439418",
+    "project_id": "octoverse-iam-dev",
+    "storage_bucket": "octoverse-iam-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:716889439418:android:59c57545502fdb3a7c9683",
+        "android_client_info": {
+          "package_name": "kr.octoverse.iam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADdXjcKo3YJDdYeHwDcjQv3r0z4LqE64s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

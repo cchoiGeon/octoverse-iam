@@ -2,6 +2,9 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
+    // google-services 는 android application 플러그인 뒤에 와야 한다.
+    // 앞에 두면 android {} 확장이 아직 없어서 설정을 못 읽는다.
+    id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -34,6 +37,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications 가 API 26+ 전용 API(java.time 등)를
+        // minSdk 24까지 폴리필로 쓰기 위해 desugaring을 요구한다.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -66,4 +72,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // isCoreLibraryDesugaringEnabled 가 요구하는 폴리필 라이브러리.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
