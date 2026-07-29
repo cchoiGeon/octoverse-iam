@@ -50,5 +50,8 @@ class SplashController extends GetxController {
       return;
     }
     Get.offAllNamed(AppRoutes.home);
+    // 홈 스택이 자리잡은 뒤에 딥링크를 얹는다. 순서가 뒤바뀌면
+    // offAllNamed 가 딥링크 목적지를 지운다.
+    await _push.handleInitialMessage();
   }
 }

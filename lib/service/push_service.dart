@@ -32,6 +32,7 @@ class PushService extends GetxService {
 
   StreamSubscription<String>? _refreshSub;
   StreamSubscription<RemoteMessage>? _messageSub;
+  StreamSubscription<RemoteMessage>? _openedSub;
 
   /// 서버에 등록해둔 토큰. 로그아웃 시 이 값으로 DELETE 한다.
   String? _registered;
@@ -46,6 +47,9 @@ class PushService extends GetxService {
     // 이전 토큰으로 가던 푸시가 끊기지 않는다.
     _refreshSub = _fcm.onTokenRefresh.listen(_register);
     _messageSub = FirebaseMessaging.onMessage.listen(_showForeground);
+    _openedSub = FirebaseMessaging.onMessageOpenedApp.listen(
+      (m) => _openRoute(m.data),
+    );
     unawaited(_initLocalNotifications());
   }
 
@@ -53,6 +57,7 @@ class PushService extends GetxService {
   void onClose() {
     _refreshSub?.cancel();
     _messageSub?.cancel();
+    _openedSub?.cancel();
     super.onClose();
   }
 
@@ -183,5 +188,19 @@ class PushService extends GetxService {
     // 원래 목적지로 복원하는 기능은 아직 없다.
     if (!Storage.hasSession) return;
     Get.toNamed(routeForPush(data));
+  }
+
+  /// 앱이 **완전히 종료된** 상태에서 푸시를 탭해 실행된 경우의 진입점.
+  ///
+  /// ⚠️ 반드시 스플래시가 목적지 라우팅(`Get.offAllNamed`)을 **끝낸 뒤**에
+  ///    불러야 한다. 먼저 부르면 뒤이은 offAllNamed 가 딥링크 목적지를
+  ///    지워버린다. 이게 이 기능에서 가장 실수하기 쉬운 지점이다.
+  ///
+  /// `offAllNamed` 가 아니라 `toNamed` 로 쌓는 이유는, 뒤로가기로 홈에
+  /// 돌아올 수 있어야 하기 때문이다(`_openRoute` 참고).
+  Future<void> handleInitialMessage() async {
+    final message = await _fcm.getInitialMessage();
+    if (message == null) return;
+    _openRoute(message.data);
   }
 }
