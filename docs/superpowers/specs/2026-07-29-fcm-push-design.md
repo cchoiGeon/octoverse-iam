@@ -30,7 +30,6 @@
 
 ```
 [앱 부팅]  Firebase.initializeApp()
-           + top-level 백그라운드 수신 핸들러 등록
      │
 [세션 확립]  권한이 이미 있으면 → getToken() → POST /users/me/devices
      │       (스플래시 부팅 후 · 로그인 성공 직후)
@@ -93,8 +92,24 @@ FCM 관련 부수효과를 전부 소유하는 유일한 지점. 다른 코드�
 - `FirebaseMessaging.onMessage` 구독 → 로컬 배너 + `NotificationService.load()`
 - `FirebaseMessaging.onMessageOpenedApp` 구독 → 딥링크
 
-의존성: `ApiClient`, `AuthService`, `NotificationService`. `main.dart`에서
+의존성: `ApiClient`, `NotificationService`. `main.dart`에서
 `Get.put(..., permanent: true)`로 등록하며, **`NotificationService` 다음**에 등록한다.
+
+**⚠️ 디바이스 API는 반드시 `Storage.hasSession` 가드 뒤에서만 호출한다.**
+`_AuthInterceptor`(`dio_configuration.dart`)는 401을 받으면 세션을 지우고
+`onSessionExpired` 훅을 쏜다. 비로그인 상태에서 `registerDevice`를 호출하면 그 401이
+**보고 있던 화면에서 사용자를 로그인 화면으로 튕겨낸다.** `unregister()`의 경우는 더
+나쁘다 — 훅이 다시 `unregister()`를 부르면 무한 루프가 된다. `isAuthenticated`가 아니라
+`Storage.hasSession`으로 가드하는 이유는, 인터셉터가 세션을 지운 시점에 `me.value`는
+아직 남아 있을 수 있어서다. Bearer 토큰 존재 여부가 이 호출들의 진짜 전제조건이다.
+
+### 3.1.1 백그라운드 수신 핸들러는 두지 않는다
+
+서버가 `notification` 블록을 보내므로 백그라운드·종료 상태의 표시는 **OS가 전담**한다.
+Dart 백그라운드 핸들러(`FirebaseMessaging.onBackgroundMessage`)가 할 일이 없다.
+등록하면 별도 isolate에서 `Firebase.initializeApp()`을 다시 해야 하고, 아무 일도 하지
+않는 코드가 디버깅만 어렵게 만든다. 나중에 배지 카운트 등 백그라운드 작업이 실제로
+필요해지면 그때 추가한다.
 
 ### 3.2 `lib/service/push_router.dart` (신규 · 순수 함수)
 
@@ -106,6 +121,11 @@ String routeForPush(Map<String, dynamic> data);
 `RemoteMessage`에 의존하지 않는 순수 함수로 분리한다. 알림 타입이 늘 때마다 손댈
 유일한 지점이고, Firebase 없이 단위 테스트할 수 있어야 하기 때문이다.
 
+타입 문자열은 `push_router.dart`에서 다시 적지 않는다. `social_enums.dart`에
+`NotificationTypeParse.tryParse()`를 두어 `@JsonValue`와 값이 나란히 있게 하고,
+`routeForPush`는 **enum 위에서 exhaustive switch**를 돈다. 그러면 나중에
+`NotificationType`에 값이 추가될 때 컴파일 에러가 나면서 라우트 결정을 강제한다.
+
 ### 3.3 기존 파일 수정
 
 | 파일 | 변경 |
@@ -113,7 +133,8 @@ String routeForPush(Map<String, dynamic> data);
 | `lib/core/network/apis.dart` | `devices` = `/users/me/devices`, `device` = `/users/me/devices/{token}` |
 | `lib/core/network/api_client.dart` | `registerDevice(@Body DeviceRegisterRequest)`, `unregisterDevice(@Path token)` → build_runner 재실행 |
 | `lib/data/models/social_model.dart` | `DeviceRegisterRequest { token, platform }` (`FieldRename.snake`) |
-| `lib/main.dart` | `Firebase.initializeApp()`, top-level `@pragma('vm:entry-point')` 백그라운드 핸들러, `Get.put(PushService(...))` |
+| `lib/data/enums/social_enums.dart` | `NotificationTypeParse.tryParse(String?)` — 모르는 값은 null (§3.2) |
+| `lib/main.dart` | `Firebase.initializeApp()`, `Get.put(PushService(...))` |
 | `lib/feature/splash/splash_controller.dart` | 라우팅 완료 **후** `getInitialMessage()` 처리 (§3.4) |
 | `lib/feature/onboarding/onboarding_controller.dart` | `Get.offAllNamed(home)` 직전에 `requestPermissionAndRegister()` |
 | `lib/feature/login/login_controller.dart` | 로그인 성공 후 `syncToken()` (await 하지 않음 — 로그인 흐름을 막지 않는다) |
@@ -156,7 +177,8 @@ String routeForPush(Map<String, dynamic> data);
   `com.google.firebase.messaging.default_notification_channel_id` 메타데이터.
   같은 id의 채널을 `flutter_local_notifications`로 앱 시작 시 생성한다.
   (채널이 없으면 백그라운드 알림이 기본 채널로 떨어져 포그라운드 배너와 설정이 갈린다)
-- `minSdk` 확인 — `firebase_messaging`이 요구하는 하한을 밑돌면 상향
+- `minSdk` — 확인 완료. Flutter 3.44.8의 기본값이 **24**라 Firebase Android SDK
+  요구치를 이미 넘는다. 손댈 것 없음
 
 **FlutterFire CLI는 쓰지 않는다.** Android 전용이므로 `google-services.json` 하나로
 충분하고, `firebase_options.dart`를 생성·유지할 이유가 없다. iOS를 붙일 때 재검토한다.
@@ -166,6 +188,10 @@ String routeForPush(Map<String, dynamic> data);
 이 파일의 API 키는 **클라이언트 식별자**이지 비밀이 아니다(발송 권한을 가진 서버 키와
 다르다). 커밋하지 않으면 다른 개발자·CI 빌드가 전부 깨진다.
 저장소 밖에 둔 `kakao.properties`와는 성격이 다르다.
+
+⚠️ **`.gitignore:34`에 `android/app/google-services.json`이 이미 들어 있다**
+(Flutter 템플릿 기본값). 이 줄을 지워야 한다. 안 지우면 `git add`가 조용히
+건너뛰고, 그 사실은 다른 사람이 클론했을 때 빌드 실패로만 드러난다.
 
 ### 4.4 리스크 — AGP 9.0.1 / Kotlin 2.3.20
 
@@ -186,7 +212,8 @@ String routeForPush(Map<String, dynamic> data);
 | 권한 거부 | 조용히 넘어간다. 토스트·다이얼로그로 재촉하지 않는다. 앱은 정상 동작하고 인앱 알림 피드는 그대로 쓴다 |
 | 토큰 등록 API 실패 | 삼킨다(로그만). 다음 앱 실행의 `syncToken()`이 재시도한다. 푸시는 보조 기능이라 화면을 막지 않는다 — `NotificationService`의 기존 방침과 동일 |
 | `getToken()` 실패 (Play 서비스 없음 등) | 위와 동일하게 삼킨다 |
-| 로그아웃 시 `unregister()` 실패 | 로컬 세션 정리는 **반드시** 진행한다. 서버 토큰이 남으면 서버가 무효 토큰 정리로 걷어낸다 |
+| 로그아웃 시 `unregister()` 실패 | 로컬 세션 정리는 **반드시** 진행한다. `deleteToken()`이 FCM 쪽에서 토큰을 무효화하므로, 서버에 레코드가 남아도 다음 발송이 `UNREGISTERED`를 받아 정리된다 |
+| 비로그인 상태에서 디바이스 API 호출 | **호출하지 않는다** (§3.1 가드). 401이 인터셉터를 타면 화면이 로그인으로 튕기거나 무한 루프가 난다 |
 | 알 수 없는 `type` | 알림함으로 폴백. 크래시 금지 |
 | `channel_slug` 누락 | 알림함으로 폴백 |
 | 포그라운드 수신 | 로컬 배너 + `NotificationService.load()`로 벨 배지 갱신 |
