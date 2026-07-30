@@ -13,7 +13,7 @@ Pixel 3a / API 34 에뮬레이터, Flutter 3.44.8, dev 서버(`dev-api.octoverse
 
 ```
 dart analyze   →  No issues found!
-flutter test   →  All tests passed! (23개)
+flutter test   →  All tests passed! (41개)
 ```
 
 | 영역 | 상태 |
@@ -22,6 +22,7 @@ flutter test   →  All tests passed! (23개)
 | 네트워크(401 단일 재시도) · 세션 · 참조 캐시 · 알림 · 토스트 | ✅ |
 | 화면 25개 | ✅ |
 | DS 위젯 40개 | ✅ |
+| FCM 푸시(Android) · 권한 · 토큰 등록 · 딥링크 | ✅ |
 
 **화면 25개**
 
@@ -237,6 +238,7 @@ v1엔 정정 경로가 없다. 서버 200 이전에 성공을 보여선 안 된�
 |---|---|
 | 홈 · 모임 상세 | 모임 phase가 진입 시점 고정 — 웹의 `useNow()`처럼 60초 티커가 없어 "모집중 → 진행 중" 자동 전환이 안 된다. 화면을 다시 열면 갱신된다. |
 | 알림 읽음 | 서버에 `is_read`도 읽음 처리 엔드포인트도 없어 로컬(`Storage.readNotificationIds`)에 둔다. 기기를 바꾸면 다시 안 읽음이 된다. |
+| 푸시 on/off | 서버 `settings`에 `push_notification_enabled`가 없어 앱 안에서 끌 방법이 없다. OS 알림 설정으로만 끈다. |
 | `event/poster` | **Figma 시안이 없다.** 웹 `components/app/poster/*` 기준으로 옮겼다 — 시안이 나오면 맞춰야 한다. |
 | 참가 QR 저장 | 웹의 "QR 코드 저장"(다운로드)은 옮기지 않았다. 갤러리 쓰기 권한 + 플러그인이 필요한데, 링크 복사와 홍보포스터 공유로 대체된다. |
 | 프로필 PATCH | 서버가 **전체 치환**이라 건드리지 않은 배열도 다시 보내야 한다(`ProfileItemSaver.carryOver()`). 새 하위 폼을 추가하면 여기도 같이 고쳐야 한다. |

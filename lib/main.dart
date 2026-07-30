@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -30,6 +33,11 @@ Future<void> main() async {
 
   await Storage.init();
 
+  // FCM 은 Firebase 앱이 초기화된 뒤에만 쓸 수 있다.
+  // android/app/google-services.json 에서 설정을 읽으므로 인자가 없다
+  // (Android 전용이라 firebase_options.dart 를 만들지 않는다).
+  await Firebase.initializeApp();
+
   if (kKakaoNativeKey.isNotEmpty) {
     KakaoSdk.init(nativeAppKey: kKakaoNativeKey);
   }
@@ -47,13 +55,20 @@ void _registerGlobals() {
 
   final auth = Get.put(AuthService(api), permanent: true);
   Get.put(ReferenceService(api), permanent: true);
-  Get.put(NotificationService(api, auth), permanent: true);
+  final notifications = Get.put(NotificationService(api, auth), permanent: true);
+  final push = Get.put(PushService(api, notifications), permanent: true);
+  // 로그아웃 시 이 기기로 푸시가 계속 가지 않게 토큰을 뗀다.
+  auth.onBeforeSignOut = push.unregister;
   Get.put(ToastService(), permanent: true);
 
   // 401(refresh 실패)로 세션이 끊기면 로그인 화면으로 되돌린다.
   // 인터셉터가 라우팅을 직접 알지 않도록 콜백으로만 연결한다.
   AuthInterceptorHooks.onSessionExpired = () {
     Get.find<NotificationService>().clear();
+    // 세션이 끊긴 경로는 signOutLocal() 을 타지 않아 훅이 안 불린다.
+    // 여기서는 Storage 가 이미 비었으므로 서버 DELETE 는 건너뛰고
+    // FCM 쪽 토큰만 무효화된다(unregister() 내부의 hasSession 가드).
+    unawaited(push.unregister());
     Get.offAllNamed(AppRoutes.login);
   };
 }

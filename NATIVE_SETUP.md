@@ -139,6 +139,19 @@ platform :ios, '13.0'
 
 ---
 
+## 4-1. Firebase 콘솔 (푸시)
+
+FCM 푸시를 쓰려면 별도 설정이 필요하다 → [`docs/firebase-setup-android.md`](docs/firebase-setup-android.md)
+
+`android/app/google-services.json`은 이미 저장소에 커밋돼 있어서, 그냥 클론한
+경우라면 아래 콘솔 작업 없이도 빌드·실행이 된다(이 파일이 없으면 Gradle 빌드가
+바로 실패하고, `main()`의 `await Firebase.initializeApp()`도 죽는다 — "나중에
+해도 되는" 설정이 아니다). 이 문서의 콘솔 단계가 실제로 필요해지는 시점은
+**다른 Firebase 프로젝트로 새로 연결할 때**(예: 서버가 다른 프로젝트를 쓰게
+바뀌었거나, 이 앱을 포크해 별도 프로젝트로 배포할 때)뿐이다.
+
+---
+
 ## 5. 실행
 
 ```bash

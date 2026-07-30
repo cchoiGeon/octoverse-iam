@@ -21,6 +21,14 @@ class AuthService extends GetxService {
 
   final ApiClient _api;
 
+  /// 로컬 세션을 지우기 **직전**에 불린다. `main.dart` 가 여기에
+  /// "FCM 토큰 해제"를 꽂는다.
+  ///
+  /// 콜백으로 연결하는 이유는 `AuthInterceptorHooks` 와 같다 — AuthService 가
+  /// PushService 를 직접 알면 서로를 참조하게 되고, 토큰 해제는 세션이 살아
+  /// 있을 때만 가능해서 호출 순서가 계약의 일부가 된다.
+  Future<void> Function()? onBeforeSignOut;
+
   /// 로그인한 계정. null = 비로그인.
   final Rxn<Me> me = Rxn<Me>();
 
@@ -157,6 +165,13 @@ class AuthService extends GetxService {
 
   /// 로컬 세션만 정리. 401 인터셉터도 이 경로를 탄다.
   Future<void> signOutLocal() async {
+    // 세션이 살아 있을 때 먼저 훅을 태운다 — 순서가 바뀌면 FCM 토큰 해제
+    // 요청에 Bearer 가 안 실려 401 로 떨어진다.
+    try {
+      await onBeforeSignOut?.call();
+    } catch (_) {
+      // 훅이 실패해도 로그아웃은 반드시 진행한다.
+    }
     await Storage.clearSession();
     me.value = null;
   }

@@ -15,6 +15,7 @@ class OnboardingBinding extends Bindings {
         Get.find<AuthService>(),
         Get.find<ReferenceService>(),
         Get.find<ToastService>(),
+        Get.find<PushService>(),
       ),
     );
   }

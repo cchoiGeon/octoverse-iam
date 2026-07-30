@@ -36,6 +36,26 @@ enum NotificationType {
   };
 }
 
+/// FCM data payload 의 문자열 → enum.
+///
+/// `@JsonValue` 와 값이 같아야 해서 바로 아래에 둔다 — 떨어뜨려 놓으면 한쪽만
+/// 고치고 지나가기 쉽다. json_serializable 의 역직렬화는 모르는 값에 예외를
+/// 던지지만, 푸시는 서버가 새 타입을 추가해도 앱이 죽으면 안 되므로 null 을 준다.
+extension NotificationTypeParse on NotificationType {
+  static NotificationType? tryParse(String? raw) => switch (raw) {
+    'welcome' => NotificationType.welcome,
+    'participation_ack' => NotificationType.participationAck,
+    'reminder_24h' => NotificationType.reminder24h,
+    'reminder_1h' => NotificationType.reminder1h,
+    'channel_updated' => NotificationType.channelUpdated,
+    'channel_cancelled' => NotificationType.channelCancelled,
+    'card_exchange_requested' => NotificationType.cardExchangeRequested,
+    'card_exchange_accepted' => NotificationType.cardExchangeAccepted,
+    'card_exchange_cancelled' => NotificationType.cardExchangeCancelled,
+    _ => null,
+  };
+}
+
 // ── 명함 교환 상태 ───────────────────────────────────────────
 enum CardExchangeStatus {
   @JsonValue('pending')

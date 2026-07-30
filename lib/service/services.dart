@@ -11,9 +11,11 @@
 /// | `useNotifications` / `useUnreadCount` | `NotificationService` |
 /// | `messageForError` / `errorCode` | `ApiError`(core/network) |
 /// | `RequireAuth` / `RequireOrganizer` | `RouteGuard`(GetX middleware) |
+/// | (웹에 없음 — 앱 전용) | `PushService` |
 library;
 
 export 'auth_service.dart';
 export 'notification_service.dart';
+export 'push_service.dart';
 export 'reference_service.dart';
 export 'toast_service.dart';

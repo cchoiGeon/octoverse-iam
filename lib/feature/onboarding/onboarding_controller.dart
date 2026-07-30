@@ -22,12 +22,19 @@ import 'package:iam/service/services.dart';
 ///   2. `PATCH /users/me/profile` — 관심사. CreateProfileDto에 `interest_tag_ids`가 없다
 ///   3. `POST /auth/signup`       — 약관 동의
 class OnboardingController extends GetxController {
-  OnboardingController(this._api, this._auth, this._reference, this._toast);
+  OnboardingController(
+    this._api,
+    this._auth,
+    this._reference,
+    this._toast,
+    this._push,
+  );
 
   final ApiClient _api;
   final AuthService _auth;
   final ReferenceService _reference;
   final ToastService _toast;
+  final PushService _push;
 
   static const steps = ['프로필', '경력·이력', '약관 동의'];
 
@@ -253,6 +260,10 @@ class OnboardingController extends GetxController {
 
       await _auth.refreshMe();
       _toast.success('가입이 완료됐어요. 환영합니다!');
+      // 여기가 알림 권한을 물어보기 가장 좋은 시점이다 — 방금 프로필을 만든
+      // 사람에게 "모임 리마인더를 받겠냐"는 맥락이 서 있다.
+      // 거부해도 그냥 넘어간다(내부에서 삼킨다).
+      await _push.requestPermissionAndRegister();
       Get.offAllNamed(AppRoutes.home);
     } catch (e) {
       _toast.showError(e);
