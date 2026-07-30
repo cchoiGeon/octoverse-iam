@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:iam/common/constants/colors.dart';
 import 'package:iam/common/constants/dimens.dart';
 import 'package:iam/common/constants/typography.dart';
+import 'package:iam/common/utils/keyboard_utils.dart';
 import 'package:iam/common/widgets/ds/core/iam_icon.dart';
 
 /// IamInput — IAM DS · forms
@@ -131,6 +132,7 @@ class _IamInputState extends State<IamInput> {
                   obscureText: widget.obscureText,
                   onChanged: widget.onChanged,
                   onSubmitted: widget.onSubmitted,
+                  onTapOutside: dismissKeyboardOnTapOutside,
                   textInputAction: widget.textInputAction,
                   textAlignVertical: TextAlignVertical.center,
                   style: AppTypography.bodyL.copyWith(height: 1.4),

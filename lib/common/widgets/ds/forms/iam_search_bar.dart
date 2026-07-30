@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:iam/common/constants/colors.dart';
 import 'package:iam/common/constants/dimens.dart';
 import 'package:iam/common/constants/typography.dart';
+import 'package:iam/common/utils/keyboard_utils.dart';
 import 'package:iam/common/widgets/ds/core/iam_icon.dart';
 
 /// filled — sunken 필(48px). 참가자 검색 등 단독으로 놓일 때.
@@ -61,6 +62,7 @@ class IamSearchBar extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onChanged,
+              onTapOutside: dismissKeyboardOnTapOutside,
               textAlignVertical: TextAlignVertical.center,
               style: AppTypography.body.copyWith(
                 height: 1.4,
