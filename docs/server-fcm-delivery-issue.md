@@ -45,7 +45,7 @@ curl -s "$BASE/notifications?size=1" -H "Authorization: Bearer $TOKEN"
 이 계정(`new+1785343447238@iam.app`)에는 실제 Android 기기 토큰이 등록돼 있습니다.
 
 결과: 레코드는 생성됨. 기기에는 25초 기다려도 아무것도 도착하지 않음.
-2회 반복(`ai-ed1ee9`, `llm-d8802a`) 모두 동일.
+3회 반복(`ai-ed1ee9`, `llm-d8802a`, `6-22-f3fda5`) 모두 동일.
 
 ---
 
@@ -60,10 +60,30 @@ curl -s "$BASE/notifications?size=1" -H "Authorization: Bearer $TOKEN"
 | 알림 권한 | `POST_NOTIFICATIONS: granted=true` |
 | 알림 채널 | `mId='iam_default', mImportance=4` |
 | Firebase 초기화 | `FirebaseApp initialization successful` |
+| **FCM 상시 연결** | **ESTABLISHED** (아래) |
 | **FCM 수신 로그(logcat)** | **0줄** ← 메시지가 기기까지 안 옴 |
 
-마지막 줄이 핵심입니다. FCM이 메시지를 전달했다면 앱이 포그라운드든
-백그라운드든 logcat에 반드시 흔적이 남습니다. 한 줄도 없습니다.
+### 기기의 FCM 수신 통로는 열려 있습니다
+
+"에뮬레이터라서 못 받는 것 아니냐"를 배제하기 위해 직접 확인했습니다.
+
+```
+$ netstat -an | grep 5228
+tcp6  ::ffff:10.0.2.16:60570  ::ffff:64.233.189.x:5228  ESTABLISHED
+                                                ↑ 구글 IP
+$ dumpsys activity services com.google.android.gms | grep -i gcm
+  * ServiceRecord{...  com.google.android.gms/.gcm.GcmService}
+  * ServiceRecord{...  com.google.android.gms/.gcm.nts.SchedulerService}
+
+Play 서비스 버전: 23.18.18
+```
+
+**5228은 FCM의 상시 연결 포트입니다.** 이 소켓이 ESTABLISHED이고 `GcmService`가
+동작 중이라는 것은, 기기가 FCM 메시지를 **받을 준비가 된 채로 대기 중**이라는
+뜻입니다. 그 통로로 아무것도 내려오지 않습니다.
+
+즉 기기·에뮬레이터·앱 문제가 아닙니다. **FCM에 메시지가 접수되지 않았거나,
+접수 단계에서 거부됐습니다.**
 
 ---
 
