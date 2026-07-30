@@ -10,6 +10,17 @@ import 'package:iam/data/data_manager.dart';
 import 'package:iam/service/notification_service.dart';
 import 'package:iam/service/push_router.dart';
 
+/// 로컬 알림 id 를 Android 가 받아주는 범위로 접는다.
+///
+/// `flutter_local_notifications` 는 id 가 **32비트 정수**에 들어가지 않으면
+/// `show()` 자체를 거부한다. epoch ms(1.7e12)를 그대로 넘기면 배너가 단 한 번도
+/// 뜨지 않는데, 이 파일은 실패를 삼키도록 되어 있어서 **아무 증상 없이 조용히**
+/// 안 뜬다. 실제로 그렇게 한 번 놓친 적이 있어서 순수 함수로 떼어내 테스트한다.
+///
+/// 상한을 2^31-1 이 아니라 2^30 으로 잡은 이유는, 시드 이후 `+1` 이 반복돼도
+/// 경계를 넘지 않도록 여유를 두기 위해서다.
+int notificationId(int seed) => seed.abs() % (1 << 30);
+
 /// FCM 토큰 수명주기 소유자.
 ///
 /// 앱에서 Firebase 를 아는 유일한 곳이다. 다른 코드는 아래 세 메서드만 안다.
@@ -49,7 +60,11 @@ class PushService extends GetxService {
   /// 로컬 알림 id. 겹치면 이전 알림을 덮어써서 하나만 남는다.
   /// 0부터 시작하면 새 세션의 배너가 지난 실행에서 트레이에 남아 있던
   /// 알림과 id가 겹쳐 그걸 덮어써버릴 수 있다. 시계값으로 시작해 피한다.
-  int _localId = DateTime.now().millisecondsSinceEpoch;
+  ///
+  /// ⚠️ epoch ms 를 그대로 쓰면 안 된다 — `flutter_local_notifications` 는
+  ///    id 가 **32비트 정수**에 들어가야 하고, epoch ms(1.7e12)는 이를 넘어
+  ///    `show()` 가 통째로 실패한다. `notificationId()` 가 접어 넣는다.
+  int _localId = notificationId(DateTime.now().millisecondsSinceEpoch);
 
   /// `_initLocalNotifications()`의 진행 상태.
   ///
@@ -202,7 +217,7 @@ class PushService extends GetxService {
       // show() 가 예외를 던진다.
       await _localReady;
       await _local.show(
-        id: _localId++,
+        id: _localId = notificationId(_localId + 1),
         title: notification.title,
         body: notification.body,
         notificationDetails: const NotificationDetails(
