@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:iam/common/constants/colors.dart';
 import 'package:iam/common/constants/dimens.dart';
 import 'package:iam/common/constants/typography.dart';
+import 'package:iam/common/utils/keyboard_utils.dart';
 
 /// IamTextarea — IAM DS · forms
 ///
@@ -116,6 +117,7 @@ class _IamTextareaState extends State<IamTextarea> {
             minLines: widget.rows,
             maxLines: null,
             onChanged: widget.onChanged,
+            onTapOutside: dismissKeyboardOnTapOutside,
             keyboardType: TextInputType.multiline,
             style: AppTypography.bodyL.copyWith(height: 1.6),
             decoration: InputDecoration(

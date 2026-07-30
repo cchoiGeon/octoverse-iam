@@ -7,6 +7,7 @@ import 'package:iam/common/constants/colors.dart';
 import 'package:iam/common/constants/defines.dart';
 import 'package:iam/common/constants/dimens.dart';
 import 'package:iam/common/constants/typography.dart';
+import 'package:iam/common/utils/keyboard_utils.dart';
 
 /// 6자리 코드 입력.
 ///
@@ -48,6 +49,7 @@ class CheckinCodeInput extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 maxLength: kCheckinCodeLength,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onTapOutside: dismissKeyboardOnTapOutside,
                 // iOS는 16px 미만이면 포커스 시 화면이 확대된다.
                 style: const TextStyle(fontSize: 16),
                 showCursor: false,
