@@ -16,6 +16,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # 머티리얼 위젯의 한국어 로케일 지원. `locale: ko_KR` 만 주고 이 델리게이트를
+  # 안 넣으면 showDatePicker 가 "No MaterialLocalizations found" 로 죽는다.
+  flutter_localizations:
+    sdk: flutter
+
   # ── 상태관리 · DI · 라우팅 (Pickle과 동일 스택) ──────────────
   get: ^4.6.6
   get_storage: ^2.1.1
@@ -35,7 +40,7 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_svg: ^2.0.10
   image_picker: ^1.1.2
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # ── 기능별 ──────────────────────────────────────────────────
   qr_flutter: ^4.1.0        # 참가 QR 생성 (ShareEventSheet)

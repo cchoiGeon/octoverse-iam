@@ -20,11 +20,13 @@ class ChannelFormBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      // 하단 여백 0 — 마지막 항목("공개 모임")이 하단 CTA 바에 바로 붙는다.
+      // 여백을 두면 스크롤 끝에 빈 공간이 남아 폼이 덜 끝난 것처럼 보인다.
       padding: const EdgeInsets.fromLTRB(
         AppDimens.gutterMobile,
         AppDimens.space5,
         AppDimens.gutterMobile,
-        AppDimens.space10,
+        0,
       ),
       children: [
         Obx(

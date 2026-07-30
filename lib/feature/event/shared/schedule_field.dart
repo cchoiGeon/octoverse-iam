@@ -134,8 +134,11 @@ class ScheduleField extends StatelessWidget {
                   fontWeight: AppTypography.semibold,
                 ),
               ),
-              const Spacer(),
-              Flexible(
+              // Spacer 를 같이 두면 남은 폭을 둘이 반씩 나눠 가져서 값이
+              // "날짜와 시간을 골라주…" 처럼 잘린다. Expanded 하나로 남은 폭을
+              // 전부 값에 주고, 오른쪽 정렬로 라벨과 떨어뜨린다.
+              const SizedBox(width: AppDimens.space2),
+              Expanded(
                 child: Text(
                   value,
                   maxLines: 1,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
@@ -86,6 +87,18 @@ class IamApp extends StatelessWidget {
       theme: _theme,
       locale: const Locale('ko', 'KR'),
       fallbackLocale: const Locale('ko', 'KR'),
+
+      // ⚠️ `locale`만 주고 이걸 빠뜨리면 **날짜 선택이 통째로 터진다.**
+      // 기본 델리게이트(`DefaultMaterialLocalizations`)는 영어만 제공해서,
+      // 한국어 로케일로 `showDatePicker`를 열면 `DatePickerDialog`가
+      // "No MaterialLocalizations found"로 죽는다. 달력·시계 같은 머티리얼
+      // 위젯을 쓰는 한 이 델리게이트들이 필요하다.
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('ko', 'KR')],
 
       // 태블릿·폴더블에서 콘텐츠가 무한정 넓어지지 않게 가운데 열로 고정한다.
       // 웹의 `max-width: var(--max-content)` + `margin: 0 auto`와 같은 의도.
