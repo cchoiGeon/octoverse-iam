@@ -169,6 +169,26 @@ flutter build apk --debug
 
 ---
 
+## 종료 상태(콜드 스타트) 테스트할 때
+
+**`adb shell am force-stop` 으로 앱을 죽이면 푸시가 안 온다.** 버그가 아니다.
+Android 는 강제 종료된 패키지를 `stopped` 상태로 표시하고, 사용자가 앱을 직접
+다시 실행할 때까지 브로드캐스트를 **의도적으로 차단**한다. FCM 도 여기 걸린다.
+
+사용자가 최근 앱에서 스와이프로 닫는 것은 이 플래그가 붙지 않아 푸시가 정상
+도착한다. 그러니 테스트도 그쪽으로 해야 한다:
+
+```bash
+adb shell input keyevent KEYCODE_APP_SWITCH   # 최근 앱
+adb shell input swipe 540 1200 540 300 200    # 카드 위로 스와이프
+adb shell input keyevent KEYCODE_HOME
+adb shell pidof kr.octoverse.iam              # 비어 있으면 종료됨
+```
+
+(`am kill` 은 백그라운드 프로세스만 죽여서 포그라운드였던 앱에는 안 먹는다.)
+
+---
+
 ## 자주 나는 문제
 
 | 증상 | 원인 |
