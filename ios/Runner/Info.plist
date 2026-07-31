@@ -88,5 +88,9 @@
 		<string>kakaokompassauth</string>
 		<string>kakaolink</string>
 	</array>
+	<!-- 홍보포스터·명함을 사진 앱에 저장(gal). 읽기는 하지 않으므로
+	     NSPhotoLibraryUsageDescription(전체 접근)이 아니라 Add 전용을 쓴다. -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>포스터와 명함 이미지를 사진에 저장하기 위해 사용해요.</string>
 </dict>
 </plist>

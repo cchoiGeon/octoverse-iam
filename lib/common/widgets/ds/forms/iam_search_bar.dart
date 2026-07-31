@@ -7,6 +7,7 @@ import 'package:iam/common/constants/colors.dart';
 import 'package:iam/common/constants/dimens.dart';
 import 'package:iam/common/constants/typography.dart';
 import 'package:iam/common/utils/keyboard_utils.dart';
+import 'package:iam/common/widgets/ds/badges/iam_count_badge.dart';
 import 'package:iam/common/widgets/ds/core/iam_icon.dart';
 
 /// filled — sunken 필(48px). 참가자 검색 등 단독으로 놓일 때.
@@ -25,6 +26,8 @@ class IamSearchBar extends StatelessWidget {
     this.onClear,
     this.placeholder = '이름·관심사로 검색',
     this.variant = IamSearchBarVariant.filled,
+    this.onFilter,
+    this.filterCount = 0,
   });
 
   final TextEditingController controller;
@@ -33,8 +36,69 @@ class IamSearchBar extends StatelessWidget {
   final String placeholder;
   final IamSearchBarVariant variant;
 
+  /// 우측 필터 버튼. null이면 버튼을 그리지 않는다.
+  final VoidCallback? onFilter;
+
+  /// 적용된 필터 수. 0보다 크면 버튼이 활성 색을 띠고 배지가 붙는다.
+  final int filterCount;
+
   @override
   Widget build(BuildContext context) {
+    final field = _field();
+    if (onFilter == null) return field;
+
+    return Row(
+      children: [
+        Expanded(child: field),
+        const SizedBox(width: AppDimens.space2),
+        _filterButton(),
+      ],
+    );
+  }
+
+  /// 우측 필터 버튼 — 적용 중이면 인디고로 채우고 개수 배지를 얹는다.
+  Widget _filterButton() {
+    final active = filterCount > 0;
+
+    return Semantics(
+      button: true,
+      label: active ? '필터 $filterCount개 적용됨' : '필터',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onFilter,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: active ? AppColors.iris50 : AppColors.surfaceSunken,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: active ? AppColors.iris300 : const Color(0x00000000),
+              width: 1.5,
+            ),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              IamIcon(
+                IamIconName.sliders,
+                size: 20,
+                color: active ? AppColors.iris600 : AppColors.textSecondary,
+              ),
+              if (active)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IamCountBadge(count: filterCount),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _field() {
     final outlined = variant == IamSearchBarVariant.outlined;
 
     return Container(

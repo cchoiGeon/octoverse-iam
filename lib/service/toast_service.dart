@@ -46,6 +46,31 @@ class ToastService extends GetxService {
   void error(String message) => show(message, tone: ToastTone.error);
   void info(String message) => show(message, tone: ToastTone.info);
 
+  /// 화면을 닫고 **나서** 성공 토스트를 띄운다.
+  ///
+  /// ⚠️ 순서가 계약의 일부다. GetX의 `Get.back()`은 스낵바가 떠 있으면
+  /// **라우트 대신 스낵바만 닫고 그대로 반환한다**:
+  ///
+  /// ```dart
+  /// // get 4.x · extension_navigation.dart
+  /// if (isSnackbarOpen && !closeOverlays) {
+  ///   closeCurrentSnackbar();
+  ///   return;            // ← pop 하지 않는다
+  /// }
+  /// ```
+  ///
+  /// 그래서 `toast.success(...)` 뒤에 `Get.back()`을 부르면 저장은 됐는데
+  /// 화면이 그대로 남아 "실패한 것처럼" 보이고, 호출부가 기다리던 결과값도
+  /// 전달되지 않는다(목록이 갱신되지 않는다). 실제로 그렇게 한 번 당했다.
+  ///
+  /// `closeOverlays: true`로도 피할 수 있지만 그건 `popUntil`이라 다이얼로그·
+  /// 바텀시트가 열려 있으면 여러 라우트를 한꺼번에 닫는다. 순서를 뒤집는 쪽이 안전하다.
+  /// 토스트는 오버레이라 라우트가 바뀌어도 목적지 화면 위에 그대로 뜬다.
+  void backThen(String message, {Object? result}) {
+    Get.back<Object?>(result: result);
+    success(message);
+  }
+
   /// 예외를 한국어로 바꿔 띄운다. 화면은 서버 문구를 몰라도 된다.
   /// 웹의 `toast.showError(e)`에 대응한다.
   void showError(Object e) => error(ApiError.from(e).displayMessage);

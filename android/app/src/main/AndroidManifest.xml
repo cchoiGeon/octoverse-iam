@@ -15,6 +15,13 @@
          온보딩 완료 시점에 PushService 가 요청한다. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- 홍보포스터·명함을 갤러리에 저장(gal).
+         Android 10(API 29)부터는 Scoped Storage 라 권한 없이 저장되고,
+         그 이하에서만 필요하다. maxSdkVersion 을 빼면 최신 기기에서도
+         쓰지 않는 권한을 요구해 스토어 심사에서 지적받는다. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+
     <application
         android:label="iam"
         android:name="${applicationName}"

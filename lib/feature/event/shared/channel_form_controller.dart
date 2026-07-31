@@ -33,6 +33,7 @@ mixin ChannelFormMixin on GetxController {
   final Rxn<DateTime> endAt = Rxn<DateTime>();
   final RxBool isPublic = true.obs;
 
+  final RxnString coverError = RxnString();
   final RxnString titleError = RxnString();
   final RxnString locationError = RxnString();
   final RxnString categoryError = RxnString();
@@ -62,6 +63,7 @@ mixin ChannelFormMixin on GetxController {
         return;
       }
       coverFile.value = file;
+      coverError.value = null;
     } catch (e) {
       toast.showError(e);
     }
@@ -78,7 +80,13 @@ mixin ChannelFormMixin on GetxController {
     scheduleError.value = null;
   }
 
+  /// 커버가 정해졌는지 — 새로 고른 파일이든 기존 URL이든.
+  bool get _hasCover => coverFile.value != null || coverUrl.value != null;
+
   bool validate() {
+    // 웹(`channelSchema`)과 같이 커버는 필수다. 목록·상세·포스터가 전부
+    // 커버를 전제로 그려지므로 없는 채로 만들어지면 화면이 비어 보인다.
+    coverError.value = _hasCover ? null : '커버 이미지를 선택해 주세요.';
     titleError.value = title.text.trim().isEmpty ? '모임 이름을 입력해 주세요.' : null;
     locationError.value = location.text.trim().isEmpty ? '장소를 입력해 주세요.' : null;
     categoryError.value = category.value == null ? '카테고리를 선택해 주세요.' : null;
@@ -97,6 +105,7 @@ mixin ChannelFormMixin on GetxController {
     }
 
     return [
+      coverError,
       titleError,
       locationError,
       categoryError,

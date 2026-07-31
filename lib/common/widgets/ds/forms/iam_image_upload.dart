@@ -27,6 +27,8 @@ class IamImageUpload extends StatelessWidget {
     this.shape = IamImageShape.circle,
     this.size = 120,
     this.placeholder = '이미지 추가',
+    this.required = false,
+    this.error,
   });
 
   /// `FileImage` · `CachedNetworkImageProvider` 등 무엇이든 받는다.
@@ -42,6 +44,12 @@ class IamImageUpload extends StatelessWidget {
   final double size;
 
   final String placeholder;
+
+  /// 라벨 옆에 빨간 `*`를 붙인다(IamInput과 같은 규칙).
+  final bool required;
+
+  /// 검증 실패 문구. 있으면 [hint] 대신 빨강으로 보여준다.
+  final String? error;
 
   bool get _isCard => shape == IamImageShape.card;
 
@@ -138,8 +146,18 @@ class IamImageUpload extends StatelessWidget {
         if (label != null) ...[
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(
-              label!,
+            child: Text.rich(
+              TextSpan(
+                text: label,
+                children: required
+                    ? const [
+                        TextSpan(
+                          text: ' *',
+                          style: TextStyle(color: AppColors.error600),
+                        ),
+                      ]
+                    : null,
+              ),
               style: AppTypography.bodyS.copyWith(
                 height: 1.3,
                 fontWeight: AppTypography.semibold,
@@ -177,6 +195,20 @@ class IamImageUpload extends StatelessWidget {
             style: AppTypography.caption.copyWith(
               height: 1.4,
               color: AppColors.textTertiary,
+            ),
+          ),
+        ],
+        // 에러는 힌트와 별개로 항상 보인다 — 미리보기가 있어도 사라지면 안 된다.
+        if (error != null) ...[
+          const SizedBox(height: AppDimens.space2),
+          Align(
+            alignment: _isCard ? Alignment.centerLeft : Alignment.center,
+            child: Text(
+              error!,
+              style: AppTypography.caption.copyWith(
+                height: 1.4,
+                color: AppColors.error700,
+              ),
             ),
           ),
         ],

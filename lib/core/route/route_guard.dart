@@ -10,19 +10,13 @@ import 'app_pages.dart';
 /// 웹은 컴포넌트로 감쌌지만 GetX는 미들웨어가 라우팅 단계에서 가로챈다.
 /// 화면이 마운트되기 전에 판정하므로 웹에 있던 "첫 프레임 깜빡임" 문제가 없다.
 ///
-/// 사용:
-/// ```dart
-/// GetPage(
-///   name: AppRoutes.meProfile,
-///   page: () => const MeProfileView(),
-///   binding: MeProfileBinding(),
-///   middlewares: [AuthGuard()],
-/// )
-/// ```
+/// 부착 지점은 `AppPages._guarded` 하나로 모아 두었다. 공개 라우트는 랜딩
+/// (`/login`)·모임 상세(`/event/:slug`)와, 세션 확인 전에 뜨는 `/splash`뿐이다
+/// — 웹 `AppShell.isPublic`과 같은 기준이다.
 ///
-/// TODO(route): 보호가 필요한 GetPage에 `middlewares: [AuthGuard()]`를 붙인다.
-///   공개 라우트는 랜딩(`/login`)과 모임 상세(`/event/:slug`) 둘뿐이다
-///   — 웹 `AppShell.isPublic`과 동일하게 맞춘다.
+/// 이 가드가 실제로 일하는 곳은 **푸시 딥링크**다. 일반 흐름에서는 스플래시가
+/// 이미 분기를 마쳤지만, 알림을 탭해 보호 화면으로 곧장 들어오는 경로에는
+/// 스플래시가 없다.
 class AuthGuard extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
@@ -39,10 +33,10 @@ class AuthGuard extends GetMiddleware {
   }
 }
 
-/// 주최자 전용 가드 — 웹 `<RequireOrganizer>` 대응.
+/// 주최자 가드는 미들웨어로 만들 수 없다.
 ///
-/// ⚠️ 미들웨어 단계에서는 아직 모임 정보를 모른다(slug만 있다).
-///    그래서 주최자 판정은 **화면 안에서** 채널 로드 후에 한다.
-///    이 클래스는 로그인 여부만 보장하고, 주최자 분기는 Controller가 맡는다.
-///    (웹도 `channel.organizer.id !== me.id` 비교를 렌더 시점에 한다.)
-class OrganizerGuard extends AuthGuard {}
+/// 이 단계에서는 아직 모임 정보를 모르고 slug만 있어서, 주최자인지 알려면
+/// 채널을 불러와야 한다. 그래서 판정은 **화면 안에서** 한다 — 각 Controller가
+/// `isOrganizer`를 노출하고 View가 그것으로 갈린다
+/// (`event/manage` · `event/checkin_host` · `event/edit` · `event/poster`).
+/// 웹도 `<RequireOrganizer>`가 `channel.organizer.id !== me.id`를 렌더 시점에 본다.

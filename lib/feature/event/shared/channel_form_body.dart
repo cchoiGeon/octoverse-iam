@@ -32,6 +32,8 @@ class ChannelFormBody extends StatelessWidget {
         Obx(
           () => IamImageUpload(
             label: '커버 이미지',
+            required: true,
+            error: controller.coverError.value,
             shape: IamImageShape.card,
             placeholder: '모임을 대표할 이미지',
             preview: controller.coverFile.value != null

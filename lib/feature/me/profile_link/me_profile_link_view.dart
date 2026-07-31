@@ -24,7 +24,10 @@ class MeProfileLinkView extends GetView<MeProfileLinkController> {
         bottom: false,
         child: Column(
           children: [
-            IamAppHeader(title: '링크 추가', onBack: Get.back),
+            IamAppHeader(
+              title: controller.isEdit ? '링크 수정' : '링크 추가',
+              onBack: Get.back,
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
@@ -82,7 +85,23 @@ class MeProfileLinkView extends GetView<MeProfileLinkController> {
                     maxLength: 30,
                   ),
                   const SizedBox(height: AppDimens.space5),
-                  const IamInfoBanner(message: '외부 링크는 최대 5개까지 추가할 수 있어요.'),
+                  // 한도는 추가할 때만 의미가 있다.
+                  if (!controller.isEdit)
+                    const IamInfoBanner(
+                      message: '외부 링크는 최대 5개까지 추가할 수 있어요.',
+                    ),
+                  if (controller.isEdit) ...[
+                    const SizedBox(height: AppDimens.space6),
+                    Obx(
+                      () => IamButton(
+                        label: '링크 삭제',
+                        variant: IamButtonVariant.ghost,
+                        block: true,
+                        enabled: !controller.isSaving.value,
+                        onPressed: () => _confirmDelete(context),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -105,5 +124,16 @@ class MeProfileLinkView extends GetView<MeProfileLinkController> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final ok = await IamDialog.show(
+      context,
+      title: '링크를 삭제할까요?',
+      description: '삭제하면 프로필에서 바로 사라져요. 되돌릴 수 없어요.',
+      confirmText: '삭제',
+      tone: IamDialogTone.danger,
+    );
+    if (ok) await controller.delete();
   }
 }

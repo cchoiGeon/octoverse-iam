@@ -8,6 +8,7 @@ import 'package:iam/common/widgets/ds/ds.dart';
 import 'package:iam/data/data_manager.dart';
 
 import 'event_people_controller.dart';
+import 'widgets/interest_filter_sheet.dart';
 import 'widgets/organizer_card.dart';
 
 /// 07 참가자 리스트.
@@ -103,6 +104,9 @@ class EventPeopleView extends GetView<EventPeopleController> {
             placeholder: '닉네임으로 검색',
             onChanged: controller.onSearchChanged,
             onClear: controller.onSearchCleared,
+            filterCount: controller.appliedInterests.length,
+            onFilter: () =>
+                showInterestFilterSheet(Get.context!, controller),
           ),
           const SizedBox(height: AppDimens.space4),
           if (controller.isOrganizer && controller.attendedCount > 0) ...[
@@ -181,12 +185,12 @@ class EventPeopleView extends GetView<EventPeopleController> {
       return IamEmptyState(
         icon: IamIconName.search,
         title: '검색 결과가 없어요',
-        description: '다른 검색어를 시도해 보세요.',
+        description: '다른 검색어나 필터를 시도해 보세요.',
         action: IamButton(
-          label: '검색 초기화',
+          label: '필터 초기화',
           variant: IamButtonVariant.secondary,
           size: IamButtonSize.sm,
-          onPressed: controller.onSearchCleared,
+          onPressed: controller.resetFilters,
         ),
       );
     }

@@ -24,7 +24,10 @@ class MeProfileCareerView extends GetView<MeProfileCareerController> {
         bottom: false,
         child: Column(
           children: [
-            IamAppHeader(title: '경력 추가', onBack: Get.back),
+            IamAppHeader(
+              title: controller.isEdit ? '경력 수정' : '경력 추가',
+              onBack: Get.back,
+            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
@@ -106,6 +109,18 @@ class MeProfileCareerView extends GetView<MeProfileCareerController> {
                     maxLength: 300,
                     rows: 4,
                   ),
+                  if (controller.isEdit) ...[
+                    const SizedBox(height: AppDimens.space6),
+                    Obx(
+                      () => IamButton(
+                        label: '경력 삭제',
+                        variant: IamButtonVariant.ghost,
+                        block: true,
+                        enabled: !controller.isSaving.value,
+                        onPressed: () => _confirmDelete(context),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -158,5 +173,16 @@ class MeProfileCareerView extends GetView<MeProfileCareerController> {
         ),
       ],
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final ok = await IamDialog.show(
+      context,
+      title: '경력을 삭제할까요?',
+      description: '삭제하면 프로필에서 바로 사라져요. 되돌릴 수 없어요.',
+      confirmText: '삭제',
+      tone: IamDialogTone.danger,
+    );
+    if (ok) await controller.delete();
   }
 }

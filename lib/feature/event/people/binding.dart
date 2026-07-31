@@ -13,6 +13,7 @@ class EventPeopleBinding extends Bindings {
       () => EventPeopleController(
         Get.find<ApiClient>(),
         Get.find<AuthService>(),
+        Get.find<ReferenceService>(),
         Get.find<ToastService>(),
       ),
     );

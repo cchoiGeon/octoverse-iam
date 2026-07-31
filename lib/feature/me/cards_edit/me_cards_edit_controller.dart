@@ -99,8 +99,8 @@ class MeCardsEditController extends GetxController {
       await _api.upsertBusinessCard(
         BusinessCardUpsertRequest(frontImageUrl: front, backImageUrl: back),
       );
-      _toast.success('명함을 저장했어요.');
-      Get.back(result: true);
+      // 닫고 나서 토스트 — 순서를 뒤집으면 GetX가 라우트 대신 스낵바를 닫는다.
+      _toast.backThen('명함을 저장했어요.', result: true);
     } catch (e) {
       _toast.showError(e);
     } finally {
@@ -113,8 +113,7 @@ class MeCardsEditController extends GetxController {
     isSaving.value = true;
     try {
       await _api.deleteBusinessCard();
-      _toast.success('명함을 삭제했어요.');
-      Get.back(result: true);
+      _toast.backThen('명함을 삭제했어요.', result: true);
     } catch (e) {
       _toast.showError(e);
     } finally {

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'package:iam/core/network/api_client.dart';
 import 'package:iam/core/network/api_error.dart';
+import 'package:iam/common/widgets/ds/ds.dart';
 import 'package:iam/core/route/app_pages.dart';
 import 'package:iam/data/data_manager.dart';
 import 'package:iam/service/services.dart';
@@ -16,10 +17,11 @@ import 'package:iam/service/services.dart';
 /// 검색·정렬은 **전부 클라이언트**다 — swagger상 participations의 허용 쿼리는
 /// page/size/status 뿐이고, sort를 넘기면 400(VALIDATION_ERROR)이 난다.
 class EventPeopleController extends GetxController {
-  EventPeopleController(this._api, this._auth, this._toast);
+  EventPeopleController(this._api, this._auth, this._reference, this._toast);
 
   final ApiClient _api;
   final AuthService _auth;
+  final ReferenceService _reference;
   final ToastService _toast;
 
   late final String slug = Get.parameters['slug'] ?? '';
@@ -73,14 +75,26 @@ class EventPeopleController extends GetxController {
   /// 내가 멤버가 아니면 찜 버튼을 아예 그리지 않는다(상세의 판정과 일치).
   bool get meIsMember => myId != null && _memberIds.contains(myId);
 
-  bool get hasFilter => search.value.trim().isNotEmpty;
+  /// 적용된 관심사 필터. 값은 `Interest` enum의 이름(IamTagSelect가 String을 받는다).
+  /// 비어 있으면 필터 없음. 여러 개면 **하나라도 겹치면** 통과(OR).
+  final RxList<String> appliedInterests = <String>[].obs;
 
-  /// 검색·정렬을 적용한 목록.
+  /// 필터 시트에 넘길 선택지.
+  List<IamTagOption> get interestOptions => [
+    for (final t in _reference.interests) IamTagOption(t.name.name, t.label),
+  ];
+
+  bool get hasFilter =>
+      search.value.trim().isNotEmpty || appliedInterests.isNotEmpty;
+
+  /// 검색·관심사·정렬을 적용한 목록.
   List<ParticipationRow> get visible {
     final q = search.value.trim().toLowerCase();
     final matched = rows.where((r) {
-      if (q.isEmpty) return true;
-      return (r.user.nickname ?? '').toLowerCase().contains(q);
+      if (q.isNotEmpty && !(r.user.nickname ?? '').toLowerCase().contains(q)) {
+        return false;
+      }
+      return _matchesInterests(r, appliedInterests);
     }).toList();
 
     switch (effectiveSort) {
@@ -138,6 +152,36 @@ class EventPeopleController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// 한 명이 고른 관심사 중 **하나라도** 겹치면 통과(OR). 웹과 같은 규칙이다.
+  bool _matchesInterests(ParticipationRow r, List<String> wanted) {
+    if (wanted.isEmpty) return true;
+    final mine = r.user.interests ?? const <InterestTag>[];
+    return mine.any((t) => wanted.contains(t.name.name));
+  }
+
+  /// 시트에서 "결과 보기 (N명)"에 쓸 미리 카운트.
+  /// 아직 적용 전인 드래프트 기준이라 [appliedInterests]를 보지 않는다.
+  /// 검색어는 이미 적용된 조건이므로 함께 건다(웹은 관심사만 세지만,
+  /// 검색 중에 시트를 열면 실제 결과와 어긋나 보인다).
+  int draftMatchCount(List<String> draft) {
+    final q = search.value.trim().toLowerCase();
+    return rows.where((r) {
+      if (q.isNotEmpty && !(r.user.nickname ?? '').toLowerCase().contains(q)) {
+        return false;
+      }
+      return _matchesInterests(r, draft);
+    }).length;
+  }
+
+  void applyInterests(List<String> next) => appliedInterests.value = next;
+
+  /// 빈 결과에서 "필터 초기화" — 검색어와 관심사를 함께 지운다.
+  void resetFilters() {
+    searchController.clear();
+    search.value = '';
+    appliedInterests.clear();
   }
 
   void onSearchChanged(String v) => search.value = v;

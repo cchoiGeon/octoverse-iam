@@ -117,11 +117,17 @@ class MeLikesView extends GetView<MeLikesController> {
   }
 
   /// 찜 카드에는 "어느 모임에서 찜했는지"가 함께 보여야 맥락이 산다.
+  ///
+  /// 하트는 "내가 찜한" 탭에만 단다 — "나를 찜한"은 보기 전용이라
+  /// 내가 끌 수 있는 상태가 아니다(웹 `ReceivedLikeRow`와 같다).
   Widget _row(MyLikeRow row) {
+    final canUnlike = controller.tab.value == 0;
     return IamProfileCard(
       name: row.user.nickname,
       photo: row.user.photoUrl,
       headline: row.channel.title,
+      liked: canUnlike,
+      onLike: canUnlike ? (_) => controller.unlike(row) : null,
       onTap: () => controller.openProfile(row),
     );
   }

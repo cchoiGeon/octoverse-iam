@@ -24,7 +24,10 @@ class MeProfileRecordView extends GetView<MeProfileRecordController> {
         bottom: false,
         child: Column(
           children: [
-            IamAppHeader(title: '이력 추가', onBack: Get.back),
+            IamAppHeader(
+              title: controller.isEdit ? '이력 수정' : '이력 추가',
+              onBack: Get.back,
+            ),
             Expanded(
               child: Obx(
                 () => ListView(
@@ -35,8 +38,11 @@ class MeProfileRecordView extends GetView<MeProfileRecordController> {
                     AppDimens.space10,
                   ),
                   children: [
-                    _kindPicker(),
-                    const SizedBox(height: AppDimens.space5),
+                    // 수정 중에는 종류가 곧 "어느 배열이냐"라서 바꿀 수 없다.
+                    if (!controller.isEdit) ...[
+                      _kindPicker(),
+                      const SizedBox(height: AppDimens.space5),
+                    ],
                     ..._fields(),
                     if (controller.error.value != null) ...[
                       const SizedBox(height: AppDimens.space4),
@@ -45,6 +51,16 @@ class MeProfileRecordView extends GetView<MeProfileRecordController> {
                         style: AppTypography.caption.copyWith(
                           color: AppColors.error700,
                         ),
+                      ),
+                    ],
+                    if (controller.isEdit) ...[
+                      const SizedBox(height: AppDimens.space6),
+                      IamButton(
+                        label: '${controller.kind.value.label} 삭제',
+                        variant: IamButtonVariant.ghost,
+                        block: true,
+                        enabled: !controller.isSaving.value,
+                        onPressed: () => _confirmDelete(context),
                       ),
                     ],
                   ],
@@ -236,4 +252,16 @@ class MeProfileRecordView extends GetView<MeProfileRecordController> {
       ),
     ],
   };
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final label = controller.kind.value.label;
+    final ok = await IamDialog.show(
+      context,
+      title: '$label을 삭제할까요?',
+      description: '삭제하면 프로필에서 바로 사라져요. 되돌릴 수 없어요.',
+      confirmText: '삭제',
+      tone: IamDialogTone.danger,
+    );
+    if (ok) await controller.delete();
+  }
 }

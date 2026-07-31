@@ -14,6 +14,7 @@ class EventPosterBinding extends Bindings {
         Get.find<ApiClient>(),
         Get.find<ReferenceService>(),
         Get.find<ToastService>(),
+        Get.find<AuthService>(),
       ),
     );
   }

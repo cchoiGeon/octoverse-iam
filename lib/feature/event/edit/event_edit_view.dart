@@ -40,6 +40,19 @@ class EventEditView extends GetView<EventEditController> {
                           ],
                         ),
                       )
+                    : !controller.isOrganizer.value
+                    // 주최자만 고칠 수 있다. 서버도 403을 주지만 여기서도 막는다.
+                    ? IamEmptyState(
+                        icon: IamIconName.shieldCheck,
+                        title: '수정 권한이 없어요',
+                        description: '모임 주최자만 수정할 수 있어요.',
+                        action: IamButton(
+                          label: '모임으로 가기',
+                          variant: IamButtonVariant.secondary,
+                          size: IamButtonSize.sm,
+                          onPressed: controller.goDetail,
+                        ),
+                      )
                     : Column(
                         children: [
                           const Padding(
@@ -64,7 +77,7 @@ class EventEditView extends GetView<EventEditController> {
         ),
       ),
       bottomNavigationBar: Obx(
-        () => controller.isLoading.value
+        () => controller.isLoading.value || !controller.isOrganizer.value
             ? const SizedBox.shrink()
             : IamBottomCTABar(
                 children: [

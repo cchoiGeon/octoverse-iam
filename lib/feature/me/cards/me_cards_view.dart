@@ -9,6 +9,7 @@ import 'package:iam/common/widgets/ds/ds.dart';
 import 'package:iam/data/data_manager.dart';
 
 import 'me_cards_controller.dart';
+import 'widgets/card_viewer_sheet.dart';
 
 /// 명함첩.
 ///
@@ -72,7 +73,7 @@ class MeCardsView extends GetView<MeCardsController> {
           AppDimens.space10,
         ),
         children: [
-          _myCardSection(),
+          _myCardSection(context),
           const SizedBox(height: AppDimens.space5),
           IamSegmentedControl(
             segments: MeCardsController.tabs,
@@ -93,7 +94,7 @@ class MeCardsView extends GetView<MeCardsController> {
   }
 
   /// 내 명함이 없으면 교환 자체가 불가능하다 — 맨 위에서 등록을 유도한다.
-  Widget _myCardSection() {
+  Widget _myCardSection(BuildContext context) {
     final card = controller.myCard.value;
 
     return Container(
@@ -127,19 +128,40 @@ class MeCardsView extends GetView<MeCardsController> {
           const SizedBox(height: AppDimens.space3),
           if (card == null)
             const IamInfoBanner(message: '아직 등록한 명함이 없어요. 명함을 등록해야 교환할 수 있어요.')
-          else
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-              child: AspectRatio(
-                aspectRatio: 9 / 5,
-                child: CachedNetworkImage(
-                  imageUrl: card.frontImageUrl,
-                  fit: BoxFit.contain,
-                  errorWidget: (_, __, ___) =>
-                      const ColoredBox(color: AppColors.surfaceSunken),
+          else ...[
+            // 탭하면 크게 보고 저장·공유할 수 있다.
+            GestureDetector(
+              onTap: () => CardViewerSheet.show(
+                context,
+                title: '내 명함',
+                frontUrl: card.frontImageUrl,
+                backUrl: card.backImageUrl,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+                child: AspectRatio(
+                  aspectRatio: 9 / 5,
+                  child: CachedNetworkImage(
+                    imageUrl: card.frontImageUrl,
+                    fit: BoxFit.contain,
+                    errorWidget: (_, __, ___) =>
+                        const ColoredBox(color: AppColors.surfaceSunken),
+                  ),
                 ),
               ),
             ),
+            const SizedBox(height: AppDimens.space2),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                '탭하여 미리보기 · 공유',
+                style: AppTypography.caption.copyWith(
+                  height: 1.3,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -263,31 +285,17 @@ class MeCardsView extends GetView<MeCardsController> {
     );
   }
 
-  /// 명함 뷰어 — 앞/뒤를 크게 본다.
+  /// 교환한 명함 뷰어 — 앞/뒤를 크게 보고 저장·공유한다.
   Future<void> _viewCard(
     BuildContext context,
     String name,
     ExchangeCard card,
-  ) async {
-    await IamBottomSheet.show<void>(
+  ) {
+    return CardViewerSheet.show(
       context,
       title: '$name님의 명함',
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final url in [card.frontImageUrl, card.backImageUrl])
-            if (url != null) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
-                child: AspectRatio(
-                  aspectRatio: 9 / 5,
-                  child: CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space3),
-            ],
-        ],
-      ),
+      frontUrl: card.frontImageUrl,
+      backUrl: card.backImageUrl,
     );
   }
 }
