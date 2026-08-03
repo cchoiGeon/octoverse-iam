@@ -13,13 +13,13 @@ cd IAM_flutter
 # ⚠️ lib/main.dart 를 덮어쓸 수 있다. 먼저 백업.
 cp -r lib ../.iam_lib_backup
 
-flutter create --platforms=android,ios --org kr.octoverse .
+flutter create --platforms=android,ios --org com.octoverse .
 
 # 덮어쓴 게 있는지 확인하고, 있으면 백업에서 되돌린다.
 diff -r ../.iam_lib_backup lib
 ```
 
-`--org kr.octoverse` → 패키지명 `kr.octoverse.iam`. 이미 정해진 값이 있으면 그걸 쓴다.
+`--org com.octoverse` → 패키지명 `com.octoverse.iam`. 이미 정해진 값이 있으면 그걸 쓴다.
 
 ---
 

@@ -10,7 +10,7 @@
 서버가 알아보지 못해 발송이 **에러 없이 조용히 실패**합니다.
 
 - 서버가 쓰는 Firebase 프로젝트 ID를 알려주세요.
-- 앱은 그 프로젝트에 Android 앱(`kr.octoverse.iam`)으로 등록하겠습니다.
+- 앱은 그 프로젝트에 Android 앱(`com.octoverse.iam`)으로 등록하겠습니다.
 
 ---
 

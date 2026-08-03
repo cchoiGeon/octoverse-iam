@@ -16,7 +16,7 @@ FCM 푸시를 붙이기 전에 콘솔에서 해야 하는 일. **여기까지는
 | # | 항목 | 없으면 |
 |---|---|---|
 | 1 | Firebase 프로젝트 (**서버와 같은 것**) | 토큰이 안 맞아 발송이 **에러 없이** 실패한다 |
-| 2 | 그 프로젝트에 등록된 Android 앱 (`kr.octoverse.iam`) | `google-services.json` 을 받을 수 없다 |
+| 2 | 그 프로젝트에 등록된 Android 앱 (`com.octoverse.iam`) | `google-services.json` 을 받을 수 없다 |
 | 3 | `android/app/google-services.json` | `flutter build` 가 `File google-services.json is missing` 으로 실패 |
 | 4 | 서버용 서비스 계정 키 (서버팀 몫) | 서버가 FCM 에 발송 요청을 못 보낸다 |
 
@@ -58,7 +58,7 @@ FCM 토큰은 Firebase 프로젝트에 묶여 있다. 앱이 A 프로젝트에�
 
 | 입력란 | 값 | 비고 |
 |---|---|---|
-| Android 패키지 이름 | `kr.octoverse.iam` | **정확히 일치해야 한다** (아래 참고) |
+| Android 패키지 이름 | `com.octoverse.iam` | **정확히 일치해야 한다** (아래 참고) |
 | 앱 닉네임 | `IAM Android` | 콘솔 표시용, 아무거나 |
 | 디버그 서명 인증서 SHA-1 | **비워둔다** | FCM 은 필요 없다 |
 
@@ -67,7 +67,7 @@ FCM 토큰은 Firebase 프로젝트에 묶여 있다. 앱이 A 프로젝트에�
 
 ```bash
 grep applicationId android/app/build.gradle.kts
-# applicationId = "kr.octoverse.iam"
+# applicationId = "com.octoverse.iam"
 ```
 
 한 글자라도 다르면 빌드할 때 gradle 이
@@ -85,7 +85,7 @@ mv ~/Downloads/google-services.json android/app/google-services.json
 
 # 패키지명이 맞는지 확인
 grep -o '"package_name": "[^"]*"' android/app/google-services.json
-# "package_name": "kr.octoverse.iam"
+# "package_name": "com.octoverse.iam"
 ```
 
 콘솔의 안내는 여기서 gradle 설정을 이어서 시키는데, **그건 하지 않는다.**
@@ -182,7 +182,7 @@ Android 는 강제 종료된 패키지를 `stopped` 상태로 표시하고, 사�
 adb shell input keyevent KEYCODE_APP_SWITCH   # 최근 앱
 adb shell input swipe 540 1200 540 300 200    # 카드 위로 스와이프
 adb shell input keyevent KEYCODE_HOME
-adb shell pidof kr.octoverse.iam              # 비어 있으면 종료됨
+adb shell pidof com.octoverse.iam              # 비어 있으면 종료됨
 ```
 
 (`am kill` 은 백그라운드 프로세스만 죽여서 포그라운드였던 앱에는 안 먹는다.)

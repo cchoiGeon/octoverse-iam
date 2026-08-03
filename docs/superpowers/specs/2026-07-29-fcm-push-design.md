@@ -177,7 +177,7 @@ String routeForPush(Map<String, dynamic> data);
 
 1. **서버가 쓰는 Firebase 프로젝트 ID 확인** — 앱과 서버가 같은 프로젝트여야 한다.
    다르면 발송이 에러 없이 조용히 실패한다.
-2. 그 프로젝트에 Android 앱 추가 — 패키지명 `kr.octoverse.iam`
+2. 그 프로젝트에 Android 앱 추가 — 패키지명 `com.octoverse.iam`
 3. `google-services.json` 다운로드 → `android/app/`에 배치
 
 ### 4.2 코드 작업

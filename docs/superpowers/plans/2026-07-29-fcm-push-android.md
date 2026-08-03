@@ -33,7 +33,7 @@
 
 - [ ] 서버팀에 **`docs/server-requirements-fcm.md`** 전달
 - [ ] **서버가 쓰는 Firebase 프로젝트 ID 확인.** 앱과 서버가 다른 프로젝트면 발송이 에러 없이 조용히 실패한다
-- [ ] 그 프로젝트에 Android 앱 추가 — 패키지명 **`kr.octoverse.iam`**
+- [ ] 그 프로젝트에 Android 앱 추가 — 패키지명 **`com.octoverse.iam`**
 - [ ] `google-services.json` 다운로드 → **`android/app/google-services.json`** 에 배치
 
 이 파일이 없으면 Task 1의 빌드가 `File google-services.json is missing`으로 실패한다.

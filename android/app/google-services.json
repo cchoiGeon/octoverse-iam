@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:716889439418:android:b0ea968848d70a187c9683",
+        "android_client_info": {
+          "package_name": "com.octoverse.iam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADdXjcKo3YJDdYeHwDcjQv3r0z4LqE64s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:716889439418:android:59c57545502fdb3a7c9683",
         "android_client_info": {
           "package_name": "kr.octoverse.iam"

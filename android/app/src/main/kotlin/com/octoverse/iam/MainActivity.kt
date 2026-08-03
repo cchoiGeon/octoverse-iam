@@ -1,4 +1,4 @@
-package kr.octoverse.iam
+package com.octoverse.iam
 
 import io.flutter.embedding.android.FlutterActivity
 

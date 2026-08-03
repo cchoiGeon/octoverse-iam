@@ -109,7 +109,7 @@ FCM이 `SenderId mismatch`를 돌려주고, **앱에는 아무 로그도 남지 
 |---|---|
 | `project_id` | `octoverse-iam-dev` |
 | `project_number` (Sender ID) | `716889439418` |
-| 패키지명 | `kr.octoverse.iam` |
+| 패키지명 | `com.octoverse.iam` |
 
 **확인**: 서버가 쓰는 서비스 계정 JSON의 `project_id`가 위와 같은지 보시면 됩니다.
 다르면 둘 중 하나로 맞춰야 합니다.
