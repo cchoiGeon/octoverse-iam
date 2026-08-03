@@ -10,8 +10,6 @@ abstract final class Apis {
   /// OIDC id_token 전송. provider = kakao | google | apple.
   static const String oauthLogin = '/auth/oauth/{provider}';
 
-  /// 개발용 로그인. 같은 email = 같은 유저. 운영 비활성.
-  static const String testLogin = '/auth/test/login';
   static const String signup = '/auth/signup';
   static const String refresh = '/auth/refresh';
   static const String logout = '/auth/logout';

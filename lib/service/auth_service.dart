@@ -2,7 +2,6 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:get/get.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 
-import 'package:iam/common/constants/defines.dart';
 import 'package:iam/core/network/api_client.dart';
 import 'package:iam/core/network/api_error.dart';
 import 'package:iam/data/data_manager.dart';
@@ -107,13 +106,6 @@ class AuthService extends GetxService {
       provider.path,
       OAuthLoginRequest(idToken: idToken, email: email),
     );
-    return _establish(res);
-  }
-
-  /// 개발용 로그인 (REST §1.7). 카카오 키가 없을 때 진입 경로.
-  /// 같은 email = 같은 유저.
-  Future<LoginResult> loginForDev({String email = kDevEmail}) async {
-    final res = await _api.testLogin(TestLoginRequest(email: email));
     return _establish(res);
   }
 

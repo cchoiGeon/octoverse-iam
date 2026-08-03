@@ -90,25 +90,6 @@ class LoginView extends GetView<LoginController> {
             enabled: !controller.isBusy,
             onPressed: controller.loginWithKakao,
           ),
-          const SizedBox(height: AppDimens.space3),
-          IamButton(
-            label: '신규 회원으로 둘러보기',
-            variant: IamButtonVariant.ghost,
-            block: true,
-            loading: controller.busy.value == LoginBusy.dev,
-            enabled: !controller.isBusy,
-            onPressed: controller.loginAsNewUser,
-          ),
-          if (controller.usesTestLogin) ...[
-            const SizedBox(height: AppDimens.space3),
-            Text(
-              '카카오 키가 없어 개발용 로그인으로 동작합니다',
-              textAlign: TextAlign.center,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textTertiary,
-              ),
-            ),
-          ],
         ],
       ),
     );

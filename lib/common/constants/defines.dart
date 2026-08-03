@@ -21,16 +21,6 @@ const Duration kReceiveTimeout = Duration(seconds: 30);
 /// 카카오 네이티브 앱 키. 웹의 JS 키와 다르다(콘솔에서 별도 확인).
 const String kKakaoNativeKey = String.fromEnvironment('KAKAO_NATIVE_KEY');
 
-/// 개발용 로그인(REST §1.7 `POST /auth/test/login`) 사용 여부.
-/// 카카오 키가 비어 있으면 자동으로 테스트 로그인으로 폴백한다.
-///
-/// `.isEmpty` 대신 `== ''` 를 쓰는 이유: 프로퍼티 접근은 const 식에서 허용되지
-/// 않는다(`const_eval_property_access`). 비교 연산은 허용된다.
-const bool kUseTestLogin = kKakaoNativeKey == '';
-
-/// 테스트 로그인 기본 계정. 웹 `lib/config/dev-identity.ts`와 동일.
-const String kDevEmail = 'doyoon@iam.app';
-
 // ── 저장소 키 (GetStorage) ───────────────────────────────────
 const String kStorageAccessToken = 'iam.access';
 const String kStorageRefreshToken = 'iam.refresh';

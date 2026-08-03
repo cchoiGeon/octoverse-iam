@@ -42,10 +42,6 @@ abstract class ApiClient {
     @Body() OAuthLoginRequest body,
   );
 
-  /// 1.7 개발용 로그인. 카카오 키가 없을 때 진입 경로.
-  @POST(Apis.testLogin)
-  Future<OAuthLoginResponse> testLogin(@Body() TestLoginRequest body);
-
   /// 1.2 약관 동의 · 가입 완료.
   @POST(Apis.signup)
   Future<SignupResponse> signup(@Body() SignupRequest body);

@@ -20,18 +20,6 @@ class OAuthLoginRequest {
   Map<String, dynamic> toJson() => _$OAuthLoginRequestToJson(this);
 }
 
-/// 1.7 개발용 로그인. 같은 email = 같은 유저.
-@JsonSerializable(includeIfNull: false)
-class TestLoginRequest {
-  const TestLoginRequest({this.email});
-
-  final String? email;
-
-  factory TestLoginRequest.fromJson(Map<String, dynamic> json) =>
-      _$TestLoginRequestFromJson(json);
-  Map<String, dynamic> toJson() => _$TestLoginRequestToJson(this);
-}
-
 /// 1.2 약관 동의 · 가입 완료.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class SignupRequest {
