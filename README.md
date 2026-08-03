@@ -71,8 +71,21 @@ flutter pub get
 #    안 돌리면 .g.dart가 없어 컴파일이 안 되고, 새 필드가 조용히 무시된다.
 flutter pub run build_runner build --delete-conflicting-outputs
 
-flutter run --dart-define=API_BASE=https://dev-api.octoverse.kr/iam/v1
+./scripts/run.sh          # 인자는 그대로 flutter run 에 넘어간다 (예: -d chrome)
 ```
+
+`flutter run` 을 직접 치지 말고 **`scripts/run.sh`** 를 쓴다. 카카오 키는 주입 경로가
+둘로 갈라져 있어서 손으로 치면 한쪽을 빠뜨리기 쉽다:
+
+| 대상 | 주입 경로 |
+|---|---|
+| Android 네이티브 (리다이렉트 스킴 `kakao{key}://oauth`) | 환경변수 `KAKAO_NATIVE_KEY` → 없으면 `android/kakao.properties` |
+| Dart 코드 (`kKakaoNativeKey` · 로그인 분기) | `--dart-define=KAKAO_NATIVE_KEY` **오직 이것만** |
+
+`kakao.properties` 는 gradle 만 읽고 Dart 는 못 본다. 스크립트가 그 파일 한 곳을 읽어
+양쪽에 같은 값을 흘려주므로 값을 두 군데 적을 일이 없다.
+(Android Studio·IntelliJ 로 실행할 땐 `.idea/runConfigurations/main_dart.xml` 의
+`additionalArgs` 가 같은 역할을 한다.)
 
 `KAKAO_NATIVE_KEY`를 주지 않으면 카카오 버튼이 **개발용 로그인**
 (`POST /auth/test/login`, 계정 `doyoon@iam.app`)으로 폴백하고 화면에 그 사실이 표시된다.
@@ -82,7 +95,7 @@ flutter run --dart-define=API_BASE=https://dev-api.octoverse.kr/iam/v1
 
 ```bash
 # iam-server: npm run start:dev  (포트 3000, 프리픽스 /iam/v1)
-flutter run --dart-define=API_BASE=http://10.0.2.2:3000/iam/v1
+API_BASE=http://10.0.2.2:3000/iam/v1 ./scripts/run.sh
 ```
 
 ⚠️ **에뮬레이터에서 호스트 PC는 `127.0.0.1`이 아니라 `10.0.2.2`다.**
@@ -92,6 +105,9 @@ flutter run --dart-define=API_BASE=http://10.0.2.2:3000/iam/v1
 평문 HTTP는 Android가 기본 차단하는데, `android/app/src/debug/AndroidManifest.xml`에
 `usesCleartextTraffic="true"`를 넣어 뒀다. **debug 빌드에만** 적용되므로
 릴리스는 그대로 막혀 있다.
+
+서버는 dev(`https://dev-api.octoverse.kr/iam/v1`)에 붙는다. `API_BASE`를 주지 않으면
+같은 값이 기본으로 쓰인다.
 
 ---
 
