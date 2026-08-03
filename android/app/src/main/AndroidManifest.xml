@@ -22,9 +22,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"/>
 
+    <!-- allowBackup 은 기본값이 true 라 명시적으로 꺼야 한다.
+         세션 토큰을 get_storage(평문 JSON)에 두고 있어서 열어두면 refresh
+         token 이 구글 자동 백업을 타고 사용자 드라이브로 나간다.
+         토큰을 Keystore 기반 저장소로 옮기면 이 제약은 풀어도 된다. -->
     <application
         android:label="iam"
         android:name="${applicationName}"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
