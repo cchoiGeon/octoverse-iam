@@ -9,6 +9,17 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// 릴리즈 서명 정보. android/key.properties 에서 읽는다(저장소 밖, gitignore 대상).
+//
+// 이 파일이 없는 환경도 정상이다 — 서명 키가 없는 개발자/CI 는 아래에서
+// 디버그 키로 폴백한다. 없다고 빌드를 깨뜨리지 않는다.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val hasReleaseSigning = keystorePropertiesFile.exists()
+val keystoreProperties =
+    Properties().apply {
+        if (hasReleaseSigning) keystorePropertiesFile.inputStream().use { load(it) }
+    }
+
 // 카카오 네이티브 앱 키.
 //
 // 매니페스트의 리다이렉트 스킴(`kakao{키}://oauth`)은 **빌드 시점에 확정**돼야 해서
@@ -54,11 +65,30 @@ android {
         manifestPlaceholders["kakaoNativeKey"] = kakaoNativeKey
     }
 
+    signingConfigs {
+        // key.properties 가 있을 때만 만든다. 없는데 만들면 storeFile 이 null 이라
+        // 설정 단계에서 바로 터진다.
+        if (hasReleaseSigning) {
+            create("release") {
+                fun required(key: String): String =
+                    keystoreProperties.getProperty(key)
+                        ?: error("android/key.properties 에 $key 가 없다")
+
+                // storeFile 경로는 이 모듈(android/app) 기준으로 풀린다.
+                storeFile = file(required("storeFile"))
+                storePassword = required("storePassword")
+                keyAlias = required("keyAlias")
+                keyPassword = required("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // key.properties 가 없으면 디버그 키로 폴백해서 `flutter run --release` 는
+            // 계속 돈다. 스토어에 올릴 빌드는 반드시 key.properties 가 있는 환경에서
+            // 뽑아야 한다 — 디버그 서명 AAB 는 Play Console 이 거부한다.
+            signingConfig = signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")
         }
     }
 }
