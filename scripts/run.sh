@@ -3,7 +3,8 @@
 # 일상 실행 스크립트.
 #
 # 카카오 네이티브 앱 키는 주입 경로가 둘로 갈라져 있다 — 하나만 채우면
-# 조용히 개발용 로그인으로 폴백해서 "키는 등록했는데 왜 더미지?" 가 된다.
+# "키는 등록했는데 왜 로그인이 안 되지?" 가 된다. 진입 경로가 카카오 하나뿐이라
+# (개발용 로그인은 인증 우회라 제거했다) 키가 비면 앱을 아예 못 쓴다.
 #
 #   · Android 네이티브(리다이렉트 스킴 kakao{key}://oauth)
 #       → gradle 이 환경변수 KAKAO_NATIVE_KEY 또는 android/kakao.properties 를 읽는다
@@ -27,8 +28,8 @@ fi
 KAKAO_NATIVE_KEY="${KAKAO_NATIVE_KEY:-}"
 
 if [[ -z "$KAKAO_NATIVE_KEY" ]]; then
-  echo "⚠️  카카오 키 없음 → 카카오 버튼이 개발용 로그인(POST /auth/test/login)으로 폴백한다."
-  echo "    실 로그인을 쓰려면 android/kakao.properties 에 kakao.nativeKey=... 를 넣는다."
+  echo "⚠️  카카오 키 없음 → KakaoSdk.init 를 건너뛰어 로그인이 실패한다(진입 경로가 이것뿐이다)."
+  echo "    android/kakao.properties 에 kakao.nativeKey=... 를 넣는다."
 else
   echo "✅ 카카오 키 로드됨 (${KAKAO_NATIVE_KEY:0:6}…) → 실 카카오 로그인"
 fi

@@ -87,9 +87,10 @@ flutter pub run build_runner build --delete-conflicting-outputs
 (Android Studio·IntelliJ 로 실행할 땐 `.idea/runConfigurations/main_dart.xml` 의
 `additionalArgs` 가 같은 역할을 한다.)
 
-`KAKAO_NATIVE_KEY`를 주지 않으면 카카오 버튼이 **개발용 로그인**
-(`POST /auth/test/login`, 계정 `doyoon@iam.app`)으로 폴백하고 화면에 그 사실이 표시된다.
-카카오 콘솔 설정 전에 서버 연동만 먼저 확인할 때 이 경로를 쓴다.
+`KAKAO_NATIVE_KEY`를 주지 않으면 **로그인 자체가 안 된다.** 키가 비면 `KakaoSdk.init`을
+건너뛰므로 카카오 버튼을 눌러도 SDK 호출에서 실패한다. 예전에 있던 개발용 로그인
+(`POST /auth/test/login`) 폴백은 이메일만으로 세션이 나오는 인증 우회라 **제거했다.**
+서버 연동만 먼저 확인하려는 경우에도 카카오 키는 있어야 한다.
 
 ### 로컬 서버(iam-server)에 붙이기
 
@@ -242,6 +243,7 @@ v1엔 정정 경로가 없다. 서버 200 이전에 성공을 보여선 안 된�
 | 시각이 "PM 7:18" | intl 0.20의 `ko` 로케일 AMPMS가 "AM"/"PM" (CLDR 42 변경). 웹·Figma는 "오후" | **오전/오후는 `DateTimeUtils.time()`이 직접 조립한다** |
 | `Page` 이름 충돌 | 페이징 DTO `Page<T>` vs Flutter 네비게이터의 `Page` | **`import 'package:flutter/widgets.dart' hide Page;`** |
 | 코드 생성 실패 | `retrofit_generator` 9.x + `retrofit` 4.9.x는 `Parser.DartMappable` 미인식 | **generator는 `^10.2.8` — retrofit과 세대를 맞춘다** |
+| 카카오 인증은 끝났는데 "계속하기"에서 멈춤 | 패키지명 변경(`kr.octoverse.iam` → `com.octoverse.iam`) **전 빌드가 기기에 남아** 같은 `kakao{키}://oauth` 스킴을 선언 → 콜백이 구 패키지로 배달돼 `No uri was passed to CustomTabsActivity` 로 죽는다. 현재 빌드는 콜백을 영영 못 받는다 | **패키지명을 바꾸면 구 패키지를 지운다** — `adb uninstall kr.octoverse.iam`. 재설치로는 안 없어진다(다른 앱으로 취급된다) |
 
 에뮬레이터에서 DNS가 죽어 서버 연결이 안 되면(ICMP는 되는데 도메인 해석만 멈춤)
 `-dns-server 8.8.8.8,1.1.1.1` 로 재기동한다. 앱 문제가 아니다.
