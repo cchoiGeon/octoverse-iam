@@ -23,8 +23,6 @@ class MeSettingsController extends GetxController {
   final RxBool emailEnabled = false.obs;
   final RxBool isBusy = false.obs;
 
-  String get email => _auth.me.value?.email ?? '';
-
   /// OS 알림 권한 보유 여부. `PushService` 가 진실을 들고 있다.
   RxBool get pushEnabled => _push.isAuthorized;
 

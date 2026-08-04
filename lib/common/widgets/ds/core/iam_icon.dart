@@ -31,6 +31,7 @@ enum IamIconName {
   settings,
   briefcase,
   inbox,
+  mail,
   sort,
   logOut,
   moreHorizontal,
@@ -150,6 +151,11 @@ class IamIcon extends StatelessWidget {
     IamIconName.inbox:
         '<path d="M3 12h5l2 3h4l2-3h5"/>'
         '<path d="M5 5.5 3 12v6a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-6l-2-6.5a1 1 0 0 0-1-.5H6a1 1 0 0 0-1 .5Z"/>',
+    // 봉투. inbox(받은편지함 트레이)와 다르다 — 설정의 '이메일 알림'처럼
+    // 메일 자체를 가리킬 때 쓴다.
+    IamIconName.mail:
+        '<rect x="2" y="4" width="20" height="16" rx="2"/>'
+        '<path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
     IamIconName.sort:
         '<path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>'
         '<path d="m21 16-4 4-4-4"/><path d="M17 20V4"/>',

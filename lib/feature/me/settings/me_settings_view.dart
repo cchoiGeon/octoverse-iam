@@ -33,6 +33,7 @@ class MeSettingsView extends GetView<MeSettingsController> {
                   // 앱이 할 수 없다. 토글을 두면 되지 않는 동작을 약속하게 된다.
                   Obx(
                     () => IamListItem(
+                      icon: IamIconName.bell,
                       title: '푸시 알림',
                       description: '모임 소식·명함 교환을 기기 알림으로 받아요',
                       value: controller.pushEnabled.value ? '켜짐' : '꺼짐',
@@ -41,6 +42,7 @@ class MeSettingsView extends GetView<MeSettingsController> {
                   ),
                   Obx(
                     () => IamListItem(
+                      icon: IamIconName.mail,
                       title: '이메일 알림',
                       description: '리마인더·모임 소식을 이메일로 받아요',
                       showChevron: false,
@@ -53,19 +55,17 @@ class MeSettingsView extends GetView<MeSettingsController> {
                     ),
                   ),
                   _sectionLabel('약관·정책'),
-                  IamListItem(title: '서비스 이용약관', onTap: controller.openTerms),
                   IamListItem(
+                    icon: IamIconName.briefcase,
+                    title: '서비스 이용약관',
+                    onTap: controller.openTerms,
+                  ),
+                  IamListItem(
+                    icon: IamIconName.shieldCheck,
                     title: '개인정보 처리방침',
                     onTap: controller.openPrivacy,
                   ),
                   _sectionLabel('계정'),
-                  Obx(
-                    () => IamListItem(
-                      title: '로그인 계정',
-                      value: controller.email,
-                      showChevron: false,
-                    ),
-                  ),
                   IamListItem(
                     icon: IamIconName.logOut,
                     title: '로그아웃',
@@ -73,20 +73,11 @@ class MeSettingsView extends GetView<MeSettingsController> {
                     onTap: () => _confirmLogout(context),
                   ),
                   IamListItem(
+                    icon: IamIconName.user,
                     title: '회원 탈퇴',
                     danger: true,
                     showChevron: false,
                     onTap: () => _confirmWithdraw(context),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(AppDimens.gutterMobile),
-                    child: Text(
-                      '진행 중인 주최 모임이 있으면 탈퇴할 수 없어요. 모임을 종료한 뒤 다시 시도해 주세요.',
-                      style: AppTypography.caption.copyWith(
-                        height: 1.5,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
                   ),
                 ],
               ),
