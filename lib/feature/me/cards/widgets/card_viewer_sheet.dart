@@ -46,8 +46,19 @@ class _Body extends StatefulWidget {
 
 class _BodyState extends State<_Body> {
   /// 0 = 앞면, 1 = 뒷면.
+  ///
+  /// 스와이프와 도트 어느 쪽으로 넘겨도 이 값이 진실이다 —
+  /// 저장·공유가 지금 보고 있는 면을 대상으로 해야 하기 때문이다.
   int _side = 0;
   bool _busy = false;
+
+  final PageController _pager = PageController();
+
+  @override
+  void dispose() {
+    _pager.dispose();
+    super.dispose();
+  }
 
   bool get _hasBack => widget.backUrl != null && widget.backUrl!.isNotEmpty;
 
@@ -103,26 +114,32 @@ class _BodyState extends State<_Body> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 시트 안에서는 명함 글씨를 읽기 어렵다 — 탭하면 전체 보기로 넘긴다.
-        // 보고 있던 면 그대로 열어야 맥락이 끊기지 않는다.
-        Semantics(
-          button: true,
-          label: '명함 전체 보기',
-          child: GestureDetector(
-            onTap: () => CardFullscreenViewer.show(
-              context,
-              urls: _urls,
-              initial: _side,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-              child: AspectRatio(
-                aspectRatio: 9 / 5,
-                child: CachedNetworkImage(
-                  imageUrl: _currentUrl,
-                  fit: BoxFit.contain,
-                  errorWidget: (_, __, ___) =>
-                      const ColoredBox(color: AppColors.surfaceSunken),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimens.radiusLg),
+          child: AspectRatio(
+            aspectRatio: 9 / 5,
+            child: PageView.builder(
+              controller: _pager,
+              itemCount: _urls.length,
+              // 도트로 넘기든 밀어서 넘기든 여기로 모인다.
+              onPageChanged: (i) => setState(() => _side = i),
+              itemBuilder: (_, i) => Semantics(
+                button: true,
+                label: '명함 전체 보기',
+                // 시트 안에서는 명함 글씨를 읽기 어렵다 — 탭하면 전체 보기로
+                // 넘긴다. 보고 있던 면 그대로 열어야 맥락이 끊기지 않는다.
+                child: GestureDetector(
+                  onTap: () => CardFullscreenViewer.show(
+                    context,
+                    urls: _urls,
+                    initial: i,
+                  ),
+                  child: CachedNetworkImage(
+                    imageUrl: _urls[i],
+                    fit: BoxFit.contain,
+                    errorWidget: (_, __, ___) =>
+                        const ColoredBox(color: AppColors.surfaceSunken),
+                  ),
                 ),
               ),
             ),
@@ -171,7 +188,13 @@ class _BodyState extends State<_Body> {
             label: i == 0 ? '앞면' : '뒷면',
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _side = i),
+              // _side 를 직접 바꾸지 않는다 — 페이지를 옮기면 onPageChanged 가
+              // 갱신한다. 직접 바꾸면 도트와 보이는 면이 어긋난다.
+              onTap: () => _pager.animateToPage(
+                i,
+                duration: AppMotion.base,
+                curve: AppMotion.standard,
+              ),
               child: SizedBox(
                 width: 28,
                 height: AppDimens.touchMin,
