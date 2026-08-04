@@ -202,5 +202,16 @@ class EventPeopleDetailController extends GetxController {
   }
 
   void openMyCards() => Get.toNamed(AppRoutes.meCards);
-  void openCardEdit() => Get.toNamed(AppRoutes.meCardsEdit);
+
+  /// 편집 화면은 저장·삭제에 성공하면 `result: true` 로 닫힌다
+  /// (`MeCardsEditController` → `ToastService.backThen`).
+  ///
+  /// 그 신호를 받아 교환 상태만 다시 읽는다. 안 그러면 명함을 등록하고
+  /// 돌아와도 CTA 가 "명함이 필요해요"에 멈춰 있다.
+  /// `load()` 가 아니라 `_loadExchangeState()` 인 이유는 프로필까지 다시 받을
+  /// 필요가 없고, isLoading 을 켜면 화면이 스켈레톤으로 깜빡이기 때문이다.
+  Future<void> openCardEdit() async {
+    final changed = await Get.toNamed<Object?>(AppRoutes.meCardsEdit);
+    if (changed == true) await _loadExchangeState();
+  }
 }

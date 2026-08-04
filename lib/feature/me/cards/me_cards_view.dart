@@ -109,26 +109,53 @@ class MeCardsView extends GetView<MeCardsController> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  '내 명함',
-                  style: AppTypography.title3.copyWith(height: 1.3),
+              Text('내 명함', style: AppTypography.title3.copyWith(height: 1.3)),
+              if (card == null) ...[
+                const SizedBox(width: AppDimens.space2),
+                const IamTag('미등록', size: IamTagSize.sm),
+              ],
+              const Spacer(),
+              // 등록 전에는 아래 전체 폭 버튼이 CTA를 맡는다. 여기 작은 버튼까지
+              // 두면 같은 동작이 한 카드에 두 번 생긴다.
+              if (card != null)
+                IamButton(
+                  label: '수정',
+                  variant: IamButtonVariant.ghost,
+                  size: IamButtonSize.sm,
+                  onPressed: controller.openEdit,
                 ),
-              ),
-              IamButton(
-                label: card == null ? '등록하기' : '수정',
-                variant: card == null
-                    ? IamButtonVariant.primary
-                    : IamButtonVariant.ghost,
-                size: IamButtonSize.sm,
-                onPressed: controller.openEdit,
-              ),
             ],
           ),
           const SizedBox(height: AppDimens.space3),
-          if (card == null)
-            const IamInfoBanner(message: '아직 등록한 명함이 없어요. 명함을 등록해야 교환할 수 있어요.')
-          else ...[
+          if (card == null) ...[
+            // ⚠️ width 를 주지 않으면 텍스트 고유 너비까지만 잡힌다. 부모 Column 이
+            //    crossAxisAlignment.start 라 자식에게 느슨한 제약을 주기 때문에,
+            //    아래 block 버튼과 폭이 어긋난다.
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceSunken,
+                borderRadius: BorderRadius.circular(AppDimens.radiusMd),
+              ),
+              // IamEmptyState 의 아이콘 원(surfaceSunken)이 이 박스 배경과 같은
+              // 색이라 원 없이 글리프만 놓인 것처럼 보인다 — 의도한 모습이다.
+              child: const IamEmptyState(
+                icon: IamIconName.idCard,
+                title: '아직 등록한 명함이 없어요',
+                description: '명함을 등록하면 교환을 시작할 수 있어요',
+                padding: EdgeInsets.symmetric(
+                  vertical: AppDimens.space5,
+                  horizontal: AppDimens.space4,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppDimens.space4),
+            IamButton(
+              label: '명함 등록하기',
+              block: true,
+              onPressed: controller.openEdit,
+            ),
+          ] else ...[
             // 탭하면 크게 보고 저장·공유할 수 있다.
             GestureDetector(
               onTap: () => CardViewerSheet.show(
@@ -174,7 +201,9 @@ class MeCardsView extends GetView<MeCardsController> {
       1 => '받은 요청이 없어요',
       _ => '보낸 요청이 없어요',
     },
-    description: controller.tab.value == 0 ? '모임에서 만난 사람과 명함을 주고받아 보세요.' : null,
+    description: controller.tab.value == 0
+        ? '모임에서 만난 사람의 프로필에서 명함 교환을 요청해보세요.'
+        : null,
   );
 
   Widget _exchangeRow(BuildContext context, CardExchangeListItem e) {

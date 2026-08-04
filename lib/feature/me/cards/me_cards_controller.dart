@@ -107,5 +107,14 @@ class MeCardsController extends GetxController {
     }
   }
 
-  void openEdit() => Get.toNamed(AppRoutes.meCardsEdit);
+  /// 편집 화면은 저장·삭제에 성공하면 `result: true` 로 닫힌다
+  /// (`MeCardsEditController` → `ToastService.backThen`).
+  ///
+  /// 그 신호를 받아 다시 읽는다. 안 그러면 명함을 등록하고 돌아와도
+  /// '내 명함'이 미등록 그대로 남는다. 결과가 없을 때(그냥 뒤로 나온 경우)는
+  /// 재조회하지 않는다.
+  Future<void> openEdit() async {
+    final changed = await Get.toNamed<Object?>(AppRoutes.meCardsEdit);
+    if (changed == true) await load();
+  }
 }
