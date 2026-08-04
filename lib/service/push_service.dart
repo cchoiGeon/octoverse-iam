@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -67,6 +68,12 @@ class PushService extends GetxService with WidgetsBindingObserver {
   ///    `show()` 가 통째로 실패한다. `notificationId()` 가 접어 넣는다.
   int _localId = notificationId(DateTime.now().millisecondsSinceEpoch);
 
+  /// OS 알림 권한 보유 여부. 설정 화면이 이 값을 그린다.
+  ///
+  /// 권한은 앱 밖(OS 설정)에서도 바뀌므로 이 값 하나를 진실로 두고
+  /// `resumed` 마다 다시 읽는다 — 설정에서 켜고 돌아오면 바로 반영된다.
+  final RxBool isAuthorized = false.obs;
+
   /// `_initLocalNotifications()`의 진행 상태.
   ///
   /// `onInit`에서 fire-and-forget으로 시작하기 때문에, `initialize()`가
@@ -87,6 +94,7 @@ class PushService extends GetxService with WidgetsBindingObserver {
     );
     _localReady = _initLocalNotifications();
     WidgetsBinding.instance.addObserver(this);
+    unawaited(refreshAuthorization());
   }
 
   @override
@@ -106,26 +114,63 @@ class PushService extends GetxService with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_notifications.load());
-    }
+    if (state != AppLifecycleState.resumed) return;
+    unawaited(_notifications.load());
+    unawaited(_syncAuthorizationOnResume());
+  }
+
+  /// 권한은 앱 밖(OS 설정)에서도 바뀐다. 복귀할 때마다 다시 읽어 설정 화면이
+  /// 맞는 값을 그리게 한다.
+  ///
+  /// 등록은 **권한이 없다가 생긴 순간에만** 한다. 복귀 때마다 무조건
+  /// `syncToken()` 을 부르면 포그라운드 전환마다 POST /users/me/devices 가
+  /// 나간다 — `_register` 에는 같은 토큰을 거르는 가드가 없다.
+  Future<void> _syncAuthorizationOnResume() async {
+    final was = isAuthorized.value;
+    final now = await refreshAuthorization();
+    if (now && !was) await _issueAndRegister();
   }
 
   /// 권한이 **이미** 있으면 토큰을 서버에 등록한다. 없으면 아무것도 하지 않는다.
   /// 스플래시 부팅·로그인 성공 직후에 부른다.
   Future<void> syncToken() async {
-    final settings = await _fcm.getNotificationSettings();
-    if (settings.authorizationStatus != AuthorizationStatus.authorized) return;
+    if (!await refreshAuthorization()) return;
     await _issueAndRegister();
   }
 
   /// OS 권한 팝업을 띄우고, 승인되면 등록한다.
   /// 거부는 조용히 넘어간다 — 재촉하지 않는다.
   Future<void> requestPermissionAndRegister() async {
-    final settings = await _fcm.requestPermission();
-    if (settings.authorizationStatus != AuthorizationStatus.authorized) return;
-    await _issueAndRegister();
+    await enable();
   }
+
+  /// 현재 OS 알림 권한 상태를 다시 읽어 [isAuthorized] 에 반영한다.
+  Future<bool> refreshAuthorization() async {
+    final settings = await _fcm.getNotificationSettings();
+    final ok = settings.authorizationStatus == AuthorizationStatus.authorized;
+    isAuthorized.value = ok;
+    return ok;
+  }
+
+  /// 권한을 요청하고, 승인되면 토큰까지 등록한다. 승인 여부를 돌려준다.
+  ///
+  /// ⚠️ 이미 영구 거절한 유저에게는 **팝업이 뜨지 않고** 곧바로 denied 가
+  ///    돌아온다. 호출한 쪽은 false 를 받으면 [openOsNotificationSettings] 로
+  ///    안내해야 한다 — 아니면 눌러도 아무 일이 없는 버튼이 된다.
+  Future<bool> enable() async {
+    final settings = await _fcm.requestPermission();
+    final ok = settings.authorizationStatus == AuthorizationStatus.authorized;
+    isAuthorized.value = ok;
+    if (ok) await _issueAndRegister();
+    return ok;
+  }
+
+  /// OS 의 이 앱 알림 설정 화면을 연다.
+  ///
+  /// 끄는 경로이기도 하다 — 서버 `settings` 에 `push_notification_enabled` 가
+  /// 없어서 앱 안에서 끌 방법이 없다(README '남은 빚').
+  Future<void> openOsNotificationSettings() =>
+      AppSettings.openAppSettings(type: AppSettingsType.notification);
 
   /// 로그아웃 — 서버에서 이 기기를 떼고 로컬 토큰도 버린다.
   ///
@@ -176,6 +221,9 @@ class PushService extends GetxService with WidgetsBindingObserver {
     // ⚠️ 세션이 없으면 부르지 않는다. 401 이 _AuthInterceptor 를 타면
     //    세션 만료로 처리돼 보고 있던 화면에서 로그인으로 튕긴다.
     if (!Storage.hasSession) return;
+    // 같은 토큰을 다시 올릴 이유가 없다. 복귀·재조회 경로가 여럿이라
+    // 가드가 없으면 같은 값으로 POST 가 반복된다.
+    if (_registered == token) return;
     try {
       await _api.registerDevice(DeviceRegisterRequest(token: token));
       _registered = token;

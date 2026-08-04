@@ -29,6 +29,16 @@ class MeSettingsView extends GetView<MeSettingsController> {
                 padding: const EdgeInsets.only(bottom: AppDimens.space10),
                 children: [
                   _sectionLabel('알림'),
+                  // 토글이 아니라 이동 항목이다 — 끄는 건 OS 권한 소관이라
+                  // 앱이 할 수 없다. 토글을 두면 되지 않는 동작을 약속하게 된다.
+                  Obx(
+                    () => IamListItem(
+                      title: '푸시 알림',
+                      description: '모임 소식·명함 교환을 기기 알림으로 받아요',
+                      value: controller.pushEnabled.value ? '켜짐' : '꺼짐',
+                      onTap: controller.tapPush,
+                    ),
+                  ),
                   Obx(
                     () => IamListItem(
                       title: '이메일 알림',

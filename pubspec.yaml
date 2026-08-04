@@ -63,6 +63,10 @@ dependencies:
   # (백그라운드·종료 상태는 OS가 서버의 notification 블록으로 알아서 그린다).
   # 그 포그라운드 배너를 앱이 직접 그리는 데 쓴다.
   flutter_local_notifications: ^22.2.0
+  # OS 알림 설정 화면 열기. 권한을 영구 거절한 유저에게는 requestPermission()이
+  # 팝업 없이 즉시 denied 를 돌려줘서, 앱 안에서 되돌릴 방법이 이것뿐이다.
+  # (url_launcher 로는 시스템 설정을 못 연다.)
+  app_settings: ^8.0.3
 
 dev_dependencies:
   flutter_test:

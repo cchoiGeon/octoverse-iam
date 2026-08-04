@@ -14,6 +14,7 @@ class MeSettingsBinding extends Bindings {
         Get.find<ApiClient>(),
         Get.find<AuthService>(),
         Get.find<ToastService>(),
+        Get.find<PushService>(),
       ),
     );
   }

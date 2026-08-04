@@ -12,17 +12,21 @@ import 'package:iam/service/services.dart';
 /// 라우트   : AppRoutes.meSettings
 /// 웹 대응  : `IAM_web/src/app/(app)/me/settings/page.tsx`
 class MeSettingsController extends GetxController {
-  MeSettingsController(this._api, this._auth, this._toast);
+  MeSettingsController(this._api, this._auth, this._toast, this._push);
 
   final ApiClient _api;
   final AuthService _auth;
   final ToastService _toast;
+  final PushService _push;
 
   final RxBool isLoading = true.obs;
   final RxBool emailEnabled = false.obs;
   final RxBool isBusy = false.obs;
 
   String get email => _auth.me.value?.email ?? '';
+
+  /// OS 알림 권한 보유 여부. `PushService` 가 진실을 들고 있다.
+  RxBool get pushEnabled => _push.isAuthorized;
 
   @override
   void onInit() {
@@ -54,6 +58,24 @@ class MeSettingsController extends GetxController {
       emailEnabled.value = prev;
       _toast.showError(e);
     }
+  }
+
+  /// 푸시 알림 항목 탭.
+  ///
+  /// 켜져 있으면 OS 설정으로 보낸다 — 끄는 건 앱이 할 수 없다(서버 `settings`
+  /// 에 `push_notification_enabled` 가 없다). 꺼져 있으면 권한을 요청하는데,
+  /// 영구 거절한 유저에게는 팝업이 뜨지 않으므로 그때도 설정으로 보낸다.
+  /// 눌렀는데 아무 일도 안 일어나는 상태를 만들지 않는 게 요점이다.
+  Future<void> tapPush() async {
+    if (pushEnabled.value) {
+      await _push.openOsNotificationSettings();
+      return;
+    }
+    if (await _push.enable()) {
+      _toast.success('알림을 켰어요.');
+      return;
+    }
+    await _push.openOsNotificationSettings();
   }
 
   Future<void> logout() async {
