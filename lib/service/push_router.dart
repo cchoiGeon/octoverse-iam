@@ -34,10 +34,23 @@ String routeForPush(Map<String, dynamic> data) {
           ? AppRoutes.meNotifications
           : AppRoutes.eventDetailOf(slug),
 
+    // 주최자에게 가는 알림이다. 상세가 아니라 승인/거절을 할 수 있는
+    // 참가자 관리로 보낸다 — 탭한 이유가 곧 처리이기 때문이다.
+    NotificationType.participationRequested =>
+      (slug == null || slug.isEmpty)
+          ? AppRoutes.meNotifications
+          : AppRoutes.eventManageOf(slug),
+
+    // 누가 찜했는지는 모임이 아니라 찜 목록에서 본다.
+    NotificationType.likeReceived => AppRoutes.meLikes,
+
     NotificationType.cardExchangeRequested ||
     NotificationType.cardExchangeAccepted ||
     NotificationType.cardExchangeCancelled => AppRoutes.meCards,
 
-    NotificationType.welcome => AppRoutes.meNotifications,
+    // `unknown` 은 tryParse 가 null 로 걸러 여기까지 오지 않지만, switch 가
+    // 총체적이어야 해서 둔다. 모르는 알림의 착지점은 알림함이다.
+    NotificationType.welcome ||
+    NotificationType.unknown => AppRoutes.meNotifications,
   };
 }

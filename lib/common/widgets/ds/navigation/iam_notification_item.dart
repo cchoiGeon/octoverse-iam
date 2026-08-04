@@ -36,12 +36,17 @@ class IamNotificationItem extends StatelessWidget {
     NotificationType.cardExchangeRequested ||
     NotificationType.cardExchangeAccepted ||
     NotificationType.cardExchangeCancelled => IamNotificationKind.card,
+    NotificationType.likeReceived => IamNotificationKind.like,
     NotificationType.participationAck ||
+    NotificationType.participationRequested ||
     NotificationType.reminder24h ||
     NotificationType.reminder1h ||
     NotificationType.channelUpdated ||
     NotificationType.channelCancelled => IamNotificationKind.event,
-    NotificationType.welcome => IamNotificationKind.system,
+    // unknown 은 목록에서 걸러지지만(NotificationService), switch 는 총체적이어야
+    // 하고 다른 진입점이 생겨도 죽지 않아야 한다.
+    NotificationType.welcome ||
+    NotificationType.unknown => IamNotificationKind.system,
   };
 
   @override

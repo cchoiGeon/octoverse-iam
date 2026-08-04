@@ -50,7 +50,12 @@ class MeDashboardView extends GetView<MeDashboardController> {
               style: AppTypography.title1.copyWith(height: 1.3),
             ),
           ),
-          IamNotificationBell(onTap: controller.openNotifications),
+          Obx(
+            () => IamNotificationBell(
+              count: controller.unreadCount,
+              onTap: controller.openNotifications,
+            ),
+          ),
         ],
       ),
     );

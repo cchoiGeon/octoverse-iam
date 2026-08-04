@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 
@@ -28,7 +29,7 @@ int notificationId(int seed) => seed.abs() % (1 << 30);
 /// **`syncToken()` 과 `requestPermissionAndRegister()` 를 나눈 이유**
 /// 재로그인한 유저에게 권한 팝업을 다시 띄우면 안 되지만, 토큰 자체는 매번
 /// 등록돼야 한다. FCM 토큰은 앱 재설치·데이터 삭제·장기 미사용으로 바뀐다.
-class PushService extends GetxService {
+class PushService extends GetxService with WidgetsBindingObserver {
   /// AndroidManifest 의 `default_notification_channel_id` 와 같은 값이어야 한다.
   /// 다르면 백그라운드(OS 가 그림)와 포그라운드(우리가 그림) 알림이 서로 다른
   /// 채널로 가서 사용자가 소리·중요도를 따로 꺼야 하는 상태가 된다.
@@ -85,14 +86,29 @@ class PushService extends GetxService {
       (m) => _openRoute(m.data),
     );
     _localReady = _initLocalNotifications();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshSub?.cancel();
     _messageSub?.cancel();
     _openedSub?.cancel();
     super.onClose();
+  }
+
+  /// 백그라운드에 있는 동안 도착한 푸시를 복귀 시점에 배지로 반영한다.
+  ///
+  /// `FirebaseMessaging.onMessage` 는 **포그라운드 전용**이다. 앱이 내려가 있는
+  /// 동안 온 알림은 OS 가 트레이에 그리고 앱은 듣지 못하므로, 돌아왔을 때
+  /// 한 번 당겨오지 않으면 배너는 봤는데 벨 배지는 0인 상태가 된다.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_notifications.load());
+    }
   }
 
   /// 권한이 **이미** 있으면 토큰을 서버에 등록한다. 없으면 아무것도 하지 않는다.

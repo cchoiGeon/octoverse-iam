@@ -3,11 +3,21 @@ import 'package:json_annotation/json_annotation.dart';
 /// 알림 · 명함교환 · 찜 관련 enum — `IAM_web/src/types/api.ts` 이식.
 
 // ── 알림 종류 ────────────────────────────────────────────────
+//
+// ⚠️ 서버(`/iam/docs-json`)가 정의한 11종과 **한 개도 빠짐없이** 맞춰야 한다.
+//    `$enumDecode` 는 모르는 값에 예외를 던지는데, 알림은 페이지 단위로
+//    파싱되므로 미지의 타입 한 건이 그 페이지 전체를 날려버린다.
+//    그래서 `unknown` 폴백을 두고(`social_model.dart` 의 unknownEnumValue),
+//    목록에서는 `NotificationService` 가 걸러낸다.
 enum NotificationType {
   @JsonValue('welcome')
   welcome,
   @JsonValue('participation_ack')
   participationAck,
+  @JsonValue('participation_requested')
+  participationRequested,
+  @JsonValue('like_received')
+  likeReceived,
   @JsonValue('reminder_24h')
   reminder24h,
   @JsonValue('reminder_1h')
@@ -21,11 +31,16 @@ enum NotificationType {
   @JsonValue('card_exchange_accepted')
   cardExchangeAccepted,
   @JsonValue('card_exchange_cancelled')
-  cardExchangeCancelled;
+  cardExchangeCancelled,
+
+  /// 서버가 새 타입을 추가했을 때 떨어지는 자리. 목록에는 그리지 않는다.
+  unknown;
 
   String get label => switch (this) {
     NotificationType.welcome => '환영합니다',
     NotificationType.participationAck => '참가 신청이 접수됐어요',
+    NotificationType.participationRequested => '새 참가 신청이 도착했어요',
+    NotificationType.likeReceived => '찜을 받았어요',
     NotificationType.reminder24h => '모임 24시간 전이에요',
     NotificationType.reminder1h => '모임 1시간 전이에요',
     NotificationType.channelUpdated => '모임 정보가 변경됐어요',
@@ -33,6 +48,7 @@ enum NotificationType {
     NotificationType.cardExchangeRequested => '명함 교환 요청이 도착했어요',
     NotificationType.cardExchangeAccepted => '명함 교환이 수락됐어요',
     NotificationType.cardExchangeCancelled => '명함 교환 요청이 취소됐어요',
+    NotificationType.unknown => '새 알림이 도착했어요',
   };
 }
 
@@ -45,6 +61,8 @@ extension NotificationTypeParse on NotificationType {
   static NotificationType? tryParse(String? raw) => switch (raw) {
     'welcome' => NotificationType.welcome,
     'participation_ack' => NotificationType.participationAck,
+    'participation_requested' => NotificationType.participationRequested,
+    'like_received' => NotificationType.likeReceived,
     'reminder_24h' => NotificationType.reminder24h,
     'reminder_1h' => NotificationType.reminder1h,
     'channel_updated' => NotificationType.channelUpdated,

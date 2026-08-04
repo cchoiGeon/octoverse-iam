@@ -10,10 +10,14 @@ import 'package:iam/service/services.dart';
 /// 라우트   : AppRoutes.me
 /// 웹 대응  : `IAM_web/src/app/(app)/me/page.tsx`
 class MeDashboardController extends GetxController {
-  MeDashboardController(this._api, this._auth);
+  MeDashboardController(this._api, this._auth, this._notifications);
 
   final ApiClient _api;
   final AuthService _auth;
+  final NotificationService _notifications;
+
+  /// 헤더 벨 배지. 홈과 같은 값을 본다(`HomeController.unreadCount`).
+  int get unreadCount => _notifications.unreadCount;
 
   final RxBool isLoading = true.obs;
 

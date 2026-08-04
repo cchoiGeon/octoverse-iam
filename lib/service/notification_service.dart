@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import 'package:iam/core/network/api_client.dart';
@@ -34,9 +35,17 @@ class NotificationService extends GetxService {
     isLoading.value = true;
     try {
       final page = await _api.notifications(size: size);
-      items.value = _mergeRead(page.content);
-    } catch (_) {
-      // 조용히 실패 — 알림은 보조 기능이라 화면을 막지 않는다.
+      // 서버가 새로 추가한 타입은 그릴 방법이 없으니 뺀다. 목록 전체를
+      // 버리지 않는 게 요점이다 — 나머지 알림은 그대로 보여야 한다.
+      final known = page.content.where(
+        (n) => n.type != NotificationType.unknown,
+      );
+      items.value = _mergeRead(known.toList());
+    } catch (e) {
+      // 화면은 막지 않는다(알림은 보조 기능). 다만 조용히 삼키면 목록이 왜
+      // 비었는지 알 길이 없어진다 — 실제로 그것 때문에 파싱 실패를 한참
+      // 못 찾았다.
+      if (kDebugMode) debugPrint('[NotificationService] 알림 조회 실패: $e');
     } finally {
       isLoading.value = false;
     }

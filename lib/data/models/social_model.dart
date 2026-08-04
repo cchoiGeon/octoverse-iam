@@ -109,6 +109,11 @@ class NotificationRow {
   });
 
   final String id;
+
+  /// 모르는 값이 와도 예외를 던지지 않고 `unknown` 으로 떨어진다.
+  /// 이게 없으면 미지의 타입 한 건이 페이지 전체 파싱을 깨뜨린다
+  /// (`social_enums.dart` 주석 참고).
+  @JsonKey(unknownEnumValue: NotificationType.unknown)
   final NotificationType type;
 
   /// 모임과 무관한 알림(welcome 등)은 null.

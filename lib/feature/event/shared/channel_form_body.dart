@@ -161,7 +161,8 @@ class ChannelFormBody extends StatelessWidget {
               IamFilterChip(
                 label: c.label,
                 selected: controller.category.value == c,
-                size: IamFilterChipSize.sm,
+                // 크기는 기본값(md) — 바로 아래 '관련 관심사'의 IamTagSelect 칩과
+                // 높이·패딩·타이포가 같아야 한 폼 안에서 따로 놀지 않는다.
                 onTap: () {
                   controller.category.value = controller.category.value == c
                       ? null

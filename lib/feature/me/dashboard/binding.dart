@@ -10,8 +10,11 @@ class MeDashboardBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<MeDashboardController>(
-      () =>
-          MeDashboardController(Get.find<ApiClient>(), Get.find<AuthService>()),
+      () => MeDashboardController(
+        Get.find<ApiClient>(),
+        Get.find<AuthService>(),
+        Get.find<NotificationService>(),
+      ),
     );
   }
 }
