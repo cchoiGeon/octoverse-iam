@@ -8,6 +8,8 @@ import 'package:iam/common/utils/image_share_utils.dart';
 import 'package:iam/common/widgets/ds/ds.dart';
 import 'package:iam/service/services.dart';
 
+import 'card_fullscreen_viewer.dart';
+
 /// 명함 뷰어 — 앞/뒤를 크게 보고 저장·공유한다.
 ///
 /// 웹 대응: `IAM_web/src/components/app/CardViewerSheet.tsx`
@@ -53,6 +55,12 @@ class _BodyState extends State<_Body> {
   String get _currentUrl =>
       _side == 1 && _hasBack ? widget.backUrl! : widget.frontUrl;
 
+  /// 전체 보기에 넘길 목록 — 앞면부터.
+  List<String> get _urls => [
+    widget.frontUrl,
+    if (_hasBack) widget.backUrl!,
+  ];
+
   ToastService get _toast => Get.find<ToastService>();
 
   Future<void> _run(bool save) async {
@@ -95,15 +103,28 @@ class _BodyState extends State<_Body> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppDimens.radiusLg),
-          child: AspectRatio(
-            aspectRatio: 9 / 5,
-            child: CachedNetworkImage(
-              imageUrl: _currentUrl,
-              fit: BoxFit.contain,
-              errorWidget: (_, __, ___) =>
-                  const ColoredBox(color: AppColors.surfaceSunken),
+        // 시트 안에서는 명함 글씨를 읽기 어렵다 — 탭하면 전체 보기로 넘긴다.
+        // 보고 있던 면 그대로 열어야 맥락이 끊기지 않는다.
+        Semantics(
+          button: true,
+          label: '명함 전체 보기',
+          child: GestureDetector(
+            onTap: () => CardFullscreenViewer.show(
+              context,
+              urls: _urls,
+              initial: _side,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimens.radiusLg),
+              child: AspectRatio(
+                aspectRatio: 9 / 5,
+                child: CachedNetworkImage(
+                  imageUrl: _currentUrl,
+                  fit: BoxFit.contain,
+                  errorWidget: (_, __, ___) =>
+                      const ColoredBox(color: AppColors.surfaceSunken),
+                ),
+              ),
             ),
           ),
         ),
