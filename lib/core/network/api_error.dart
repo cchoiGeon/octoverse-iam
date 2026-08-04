@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 /// 서버 에러 코드 → 한국어 메시지.
 /// `IAM_web/src/lib/services/errors.ts` 1:1 이식.
@@ -37,6 +38,9 @@ class ApiError implements Exception {
       };
       return ApiError(code, '', status);
     }
+    // 여기까지 온 건 우리가 모르는 예외다(카카오 SDK 예외 등). 화면에는 일반 문구만
+    // 나가므로, 원본을 여기서 안 찍으면 무슨 일이 났는지 알 방법이 사라진다.
+    if (kDebugMode) debugPrint('[ApiError] 매핑 안 된 예외: ${e.runtimeType} / $e');
     return const ApiError('UNKNOWN', '', 0);
   }
 
